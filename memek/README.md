@@ -1,13 +1,8 @@
 # Mémsarok
 
-A főoldal minden betöltéskor véletlenszerűen mutat egy képet, két forrásból fele-fele arányban:
+A főoldal minden betöltéskor egy véletlen fotót mutat a [Fortepan](https://fortepan.hu) archívumából, a `fortepan.json`-ban beállított keresések és címkék alapján. A „Másikat” gombbal lehet tovább lapozni.
 
-1. **Saját mémek:** az ebben a mappában lévő képek.
-2. **Fortepan-fotók:** a `fortepan.json`-ban beállított keresések és címkék találatai a [Fortepan](https://fortepan.hu) archívumából.
-
-A „Másikat” gombbal lehet tovább lapozni.
-
-## Fortepan-keresések beállítása
+## Keresések és címkék beállítása
 
 Szerkeszd a `fortepan.json` fájlt (GitHubon: a fájl megnyitása, majd a ceruza ikon, végül **Commit changes**):
 
@@ -29,40 +24,20 @@ Szerkeszd a `fortepan.json` fájlt (GitHubon: a fájl megnyitása, majd a ceruza
 
 Mentés után a GitHub Action kb. egy perc alatt lekéri a találatokat a `fortepan.js`-be. Ezen kívül hetente egyszer (hétfő hajnalban) magától is frissít.
 
-Sorsoláskor az oldal előbb a forrást választja (saját mém vagy Fortepan), aztán egy véletlen keresést vagy címkét, végül abból egy véletlen fotót. Így egy kevés találatú címke is ugyanúgy sorra kerül, mint egy több száz találatos.
+Sorsoláskor az oldal előbb egy véletlen keresést vagy címkét választ, aztán abból egy véletlen fotót. Így egy kevés találatú címke is ugyanúgy sorra kerül, mint egy több száz találatos.
 
-Ha egy keresés nem ad találatot, a GitHub Action naplójában figyelmeztetés jelenik meg (Actions fül → „Mémlista frissítése”). Ilyenkor ellenőrizd az írásmódot a fortepan.hu-n.
+Ha egy keresés nem ad találatot, a GitHub Action naplójában figyelmeztetés jelenik meg (Actions fül → „Mémsarok frissítése”). Ilyenkor ellenőrizd az írásmódot a fortepan.hu-n. Ha a Fortepan épp nem érhető el, a korábbi lista megmarad.
 
-A Fortepan-fotók licence CC BY-SA 3.0. Az oldal minden fotó alatt feltünteti a forrást (`Fortepan / adományozó neve`), és a fotó Fortepan-adatlapjára linkel.
+## Licenc
 
-## Saját kép feltöltése
+A Fortepan-fotók licence CC BY-SA 3.0. Az oldal minden fotó alatt feltünteti a forrást (`Fortepan / adományozó neve`), és a fotó Fortepan-adatlapjára linkel. A fotókat a Fortepan saját képszerveréről tölti be; a repóba csak a metaadatok kerülnek.
 
-1. Nyisd meg a `memek/` mappát a GitHubon, és kattints az **Add file → Upload files** gombra.
-2. Húzd be a képet (PNG, JPG, GIF, WebP, AVIF vagy SVG), majd **Commit changes**.
-3. A GitHub Action kb. fél perc alatt frissíti a `memek.js` listát, és a kép bekerül a sorsolásba.
-
-Felirat (opcionális): a `feliratok.json` fájlba írd be a fájlnevet és a szöveget:
-
-```json
-{
-  "uj-kep.png": "Amikor a modell magabiztosan téved."
-}
-```
-
-Felirat nélkül a kép felirat nélkül jelenik meg, a képernyőolvasók pedig általános szöveget olvasnak fel. Ezért érdemes feliratot adni.
-
-**Kép törlése:** töröld a fájlt a mappából; a lista automatikusan frissül.
-
-## Kézi frissítés (ha nem GitHubon dolgozol)
+## Kézi frissítés
 
 A repó gyökeréből:
-
-```bash
-node memek/generate.mjs
-```
 
 ```bash
 node memek/fortepan.mjs
 ```
 
-A `memek.js`-t és a `fortepan.js`-t ne szerkeszd kézzel, mert minden frissítéskor felülíródnak. Tipp: 1200 × 675 px körüli, 500 KB alatti képek töltődnek be gyorsan.
+A `fortepan.js`-t ne szerkeszd kézzel, mert minden frissítéskor felülíródik.

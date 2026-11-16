@@ -1,16 +1,13 @@
-name: Mémlista frissítése
+name: Mémsarok frissítése
 
-# 1) Ha a memek/ mappába új kép kerül (vagy törlődik, vagy változik a feliratok.json),
-#    újragenerálja a memek/memek.js listát.
-# 2) Hetente egyszer, a fortepan.json változásakor és kézi indításkor lekéri a beállított Fortepan-keresések találatait
-#    a memek/fortepan.js-be.
+# Lekéri a memek/fortepan.json-ban beállított Fortepan-keresések találatait a memek/fortepan.js-be:
+# a fortepan.json változásakor, hetente egyszer és kézi indításkor.
 on:
   push:
     branches: [main]
     paths:
-      - "memek/**"
-      - "!memek/memek.js"
-      - "!memek/fortepan.js"
+      - "memek/fortepan.json"
+      - "memek/fortepan.mjs"
   schedule:
     - cron: "17 4 * * 1"
   workflow_dispatch:
@@ -19,27 +16,23 @@ permissions:
   contents: write
 
 jobs:
-  lista:
+  fortepan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Saját mémek listája
-        run: node memek/generate.mjs
       - name: Fortepan-keresések (memek/fortepan.json)
-        # Ha a Fortepan épp nem elérhető, a korábbi lista marad, a többi lépés lefut.
-        continue-on-error: true
         run: node memek/fortepan.mjs
       - name: Változás visszacommitolása
         run: |
-          if git diff --quiet -- memek/memek.js memek/fortepan.js; then
+          if git diff --quiet -- memek/fortepan.js; then
             echo "Nincs változás."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add memek/memek.js memek/fortepan.js
-          git commit -m "Mémlista frissítése"
+          git add memek/fortepan.js
+          git commit -m "Fortepan-lista frissítése"
           git push

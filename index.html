@@ -304,7 +304,7 @@ header.top :focus-visible { outline-color: var(--band-fg); }
       <p><span class="approx">≈</span> = a források eltértek vagy közelítő az adat; döntés előtt nézd meg a szolgáltató árlistáját (a modell adatlapján linkeljük).</p>
     </div>
   </section>
-  <!-- 4. Mémsarok: a képeket a repó memek/ mappájába töltheti fel a tulajdonos -->
+  <!-- 4. Mémsarok: Fortepan-fotók a memek/fortepan.json keresései alapján -->
   <section aria-labelledby="memeTitle" id="memeSec" hidden>
     <div class="results-head">
       <h2 id="memeTitle">Mémsarok</h2>
@@ -376,7 +376,6 @@ header.top :focus-visible { outline-color: var(--band-fg); }
 </dialog>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="memek/memek.js"></script>
 <script src="memek/fortepan.js"></script>
 <script>
 "use strict";
@@ -828,10 +827,8 @@ document.addEventListener("keydown", (e) => {
 });
 
 /* ============================== MÉMSAROK ==============================
-   Két forrás: a saját mémek (memek/memek.js, GitHub Action generálja a memek/ mappa képeiből)
-   és a Fortepan "modell" keresés fotói (memek/fortepan.js, hetente frissül). Fele-fele arányban sorsolunk. */
-const OWN = (window.MEMEK && Array.isArray(window.MEMEK.kepek) ? window.MEMEK.kepek : []).filter((m) => m && m.fajl)
-  .map((m) => ({ src: "memek/" + encodeURIComponent(m.fajl), alt: m.felirat || "Modellválasztós mém", cap: m.felirat || "", key: "m:" + m.fajl }));
+   Fortepan-fotók a memek/fortepan.json keresései és címkéi alapján (memek/fortepan.js, GitHub Action frissíti).
+   Sorsolás: véletlen keresés/címke, abból véletlen fotó. */
 const FP_GROUPS = (window.FORTEPAN && Array.isArray(window.FORTEPAN.keresesek) ? window.FORTEPAN.keresesek : [])
   .map((g) => ({ nev: String(g.nev || ""), tipus: g.tipus, items: (Array.isArray(g.kepek) ? g.kepek : []).filter((f) => f && f.mid).map((f) => ({
     src: `https://fortepan.download/file/fortepan-eu/1600/fortepan_${encodeURIComponent(f.mid)}.jpg`,
@@ -841,9 +838,7 @@ const FP_GROUPS = (window.FORTEPAN && Array.isArray(window.FORTEPAN.keresesek) ?
     tag: g.tipus === "cimke" ? `„${g.nev}” címke` : `„${g.nev}” keresés`,
     key: "f:" + f.mid
   })) })).filter((g) => g.items.length);
-// Forrás → (Fortepan esetén véletlen keresés/címke) → véletlen kép.
 const SOURCES = [];
-if (OWN.length) SOURCES.push([OWN]);
 if (FP_GROUPS.length) SOURCES.push(FP_GROUPS.map((g) => g.items));
 let memeCur = null;
 function pickMeme() {
@@ -876,11 +871,8 @@ function showMeme() {
     c.append(`${m.tag} · Fotó: `, a, " · CC BY-SA 3.0");
     cap.append(c);
   }
-  const parts = [];
-  if (OWN.length) parts.push(`${OWN.length} saját mém`);
   const fpN = FP_GROUPS.reduce((n, g) => n + g.items.length, 0);
-  if (fpN) parts.push(`${fpN} Fortepan-fotó ${FP_GROUPS.length} keresésből`);
-  $("#memeMeta").textContent = parts.join(" + ") + " · minden betöltéskor másik";
+  $("#memeMeta").textContent = `${fpN} Fortepan-fotó ${FP_GROUPS.length} keresésből · minden betöltéskor másik`;
   $("#memeSec").hidden = false;
 }
 $("#memeNext").addEventListener("click", showMeme);
