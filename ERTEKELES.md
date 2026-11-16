@@ -1,6 +1,6 @@
 # AI Modellválasztó: értékelés és javaslatok
 
-Ez a dokumentum az `eredeti.html` alkalmazást értékeli. A javított, továbbfejlesztett verzió az `index.html`.
+Ez a dokumentum az `eredeti.html` alkalmazást értékeli. A javított, továbbfejlesztett verzió az `index.html`; az OpenCode-ban választható modellek elemzése az `opencode/` mappában van.
 Az adatok állapota: 2026. november 16.
 
 ## 1. Röviden
@@ -34,10 +34,10 @@ Az ötlet jó, mert a felhasználó a feladata alapján kap modellajánlást. A 
 | Eredeti | Mai helyzet | Az új verzióban |
 |---|---|---|
 | Claude 3 Opus, 3.5 Sonnet, 3.5 Haiku, 3.7 Sonnet | kivezetve | Claude Fable 5.2, Opus 5.5, Sonnet 5.5, Haiku 5.5 |
-| GPT-4o, 4o mini, 4.5, o1, o3-mini | lecserélve (a GPT-4.5 az API-ból 2025-ben kikerült) | GPT-5.5, GPT-5.5 Pro, GPT-5.4 mini, GPT-5.4 nano, gpt-oss-120b/20b |
-| Gemini 2.5 Pro / Flash / Flash-Lite, 1.5 Pro, Gemma 3 | a 3-as generáció váltotta | Gemini 3.1 Pro, 3 Flash, 3.1 Flash-Lite, Gemma 4 |
-| Mistral Large 2, Codestral, Pixtral, Ministral 8B | Mistral 3 és 4 család | Large 4, Medium 3.5, Large 3, Small 4, Ministral 3, Devstral 2 |
-| DeepSeek V3, R1, R1-Distill | a V4 váltotta; a `deepseek-chat` és `deepseek-reasoner` nevek 2026. július 24-től megszűntek | DeepSeek V4 Pro, V4 Flash |
+| GPT-4o, 4o mini, 4.5, o1, o3-mini | a GPT-5, majd a GPT-6 család váltotta (a GPT-4.5 az API-ból 2025-ben kikerült) | GPT-6 Astra, GPT-6.1 Sol, GPT-6.1 Terra, GPT-6 Luna, gpt-oss-120b/20b |
+| Gemini 2.5 Pro / Flash / Flash-Lite, 1.5 Pro, Gemma 3 | a 3-as, majd a 4-es generáció váltotta | Gemini 4 Carbon, 4 Argon, 4 Hydrogen, 3.8 Flash, 3.5 Flash-Lite, Gemma 4 |
+| Mistral Large 2, Codestral, Pixtral, Ministral 8B | Mistral 3 és 4 család | Large 4 (béta, zárt súlyok), Medium 3.5, Large 3, Small 4, Ministral 3 |
+| DeepSeek V3, R1, R1-Distill | a V4, majd a V4.1 váltotta; a `deepseek-chat` és `deepseek-reasoner` nevek 2026. július 24-én megszűntek | DeepSeek V4 Pro, V4.1 Flash |
 
 ### 2.3 Hiányzó szempontok
 
@@ -49,9 +49,9 @@ Az ötlet jó, mert a felhasználó a feladata alapján kap modellajánlást. A 
 ### 2.4 Az adatok megbízhatósága
 
 - Az Anthropic-adatok az Anthropic aktuális dokumentációjából származnak.
-- Az OpenAI, Google, Mistral és DeepSeek adatai a hivatalos oldalakat idéző keresési találatokból származnak. A hivatalos oldalakat közvetlenül nem tudtam megnyitni.
-- Ahol a források eltértek (DeepSeek V4 árai, Mistral Large 4 ára és licence, egyes kontextusméretek), ott az alkalmazás `≈` jellel figyelmeztet.
-- Egyes forrásokban szereplő újabb neveket (GPT-5.6, Gemini 3.5/3.8 Flash) nem tudtam megerősíteni, ezért kimaradtak.
+- Az OpenAI, Google, Mistral és DeepSeek adatai a [models.dev](https://github.com/sst/models.dev) nyílt adatbázis 2026. november 16-i állapotából származnak. Ez a laborok saját oldalaira hivatkozik, és az OpenCode is ezt használja.
+- **Javítás az első verzióhoz képest:** az első változat még keresési találatokra épült, és ezek egy része elavult volt. A GPT-6 családot és a Gemini 4-et akkor tévesen nem megerősítettnek tekintettem, pedig 2026 szeptembere–novembere óta elérhetők. A Mistral Large 4 súlyai nem nyíltak, a DeepSeek V4 Pro hivatalos ára azóta csökkent. Ezeket a katalógusban javítottam.
+- A `≈` jel ott maradt, ahol a licenc vagy egy adat továbbra is bizonytalan (pl. Gemma 4 licence, Mistral Medium 3.5 súlyai).
 
 ## 3. Programhibák
 

@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>OpenCode-modellek</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: ugyanaz a nyelv, mint a Modellválasztóban – összefoglaló, ajánlások, majd fülekkel váltható táblázatok. */
+:root {
+  --bg: #f5f6f8; --surface: #ffffff; --surface-2: #eef1f5; --line: #dde2ea; --line-strong: #c5ccd8;
+  --fg: #151b25; --muted: #5a6575; --accent: #2b57d0; --accent-fg: #ffffff; --accent-soft: #e5ecfb;
+  --good: #1d7347; --good-soft: #e3f3ea; --warn: #94580a; --warn-soft: #fbf0dc; --bad: #b3261e; --bad-soft: #fbe6e4;
+  --font-ui: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 10px; --shadow: 0 1px 2px rgb(20 27 37 / .06), 0 8px 24px rgb(20 27 37 / .06);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1318; --surface: #161b22; --surface-2: #1d232d; --line: #2a313d; --line-strong: #3a4352;
+  --fg: #e6eaf1; --muted: #9aa5b5; --accent: #86a5f3; --accent-fg: #0f1318; --accent-soft: #1e2a45;
+  --good: #6fd19c; --good-soft: #17301f; --warn: #f0b562; --warn-soft: #33270f; --bad: #f2a29b; --bad-soft: #3a1c1a;
+  --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25); color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #0f1318; --surface: #161b22; --surface-2: #1d232d; --line: #2a313d; --line-strong: #3a4352;
+  --fg: #e6eaf1; --muted: #9aa5b5; --accent: #86a5f3; --accent-fg: #0f1318; --accent-soft: #1e2a45;
+  --good: #6fd19c; --good-soft: #17301f; --warn: #f0b562; --warn-soft: #33270f; --bad: #f2a29b; --bad-soft: #3a1c1a;
+  --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--font-ui); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { margin: 0; line-height: 1.2; text-wrap: balance; }
+h2 { font-size: 1.15rem; font-weight: 600; }
+h3 { font-size: 1rem; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent); }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.num, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: .86em; }
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+.label { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+header.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+header.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 14px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.brand h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -.01em; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-strong); background: var(--surface); padding: 7px 12px; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: .9rem; min-height: 36px; text-decoration: none; color: var(--fg); }
+.btn:hover { background: var(--surface-2); }
+.btn.ghost { border-color: transparent; background: transparent; }
+.btn.icon-btn { width: 36px; padding: 0; justify-content: center; }
+main { padding-block: 24px 64px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); }
+.lead { max-width: 75ch; display: grid; gap: 8px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.tile { padding: 14px 16px; display: grid; gap: 2px; }
+.tile b { font-size: 1.5rem; font-weight: 600; font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.recs { display: grid; grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)); gap: 14px; }
+.rec { padding: 16px 18px; display: grid; gap: 10px; align-content: start; }
+.rec ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.rec li { display: grid; gap: 1px; }
+.rec li button { all: unset; cursor: pointer; font-weight: 600; }
+.rec li button:hover { text-decoration: underline; }
+.rec li button:focus-visible { outline: 2px solid var(--accent); border-radius: 4px; }
+.rec .why { font-size: .85rem; color: var(--muted); }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 14px; overflow-x: auto; }
+.tabs button { border: 0; background: none; padding: 10px 14px; cursor: pointer; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.tools input[type="search"] { flex: 1 1 220px; min-width: 0; }
+select, input[type="search"] { border: 1px solid var(--line-strong); border-radius: 8px; padding: 7px 10px; background: var(--surface); min-height: 36px; }
+.check { display: flex; gap: 7px; align-items: center; font-size: .9rem; cursor: pointer; white-space: nowrap; }
+.check input { width: 16px; height: 16px; accent-color: var(--accent); }
+.table-box { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-weight: 600; font-size: .78rem; color: var(--muted); white-space: nowrap; background: var(--surface); }
+th button { all: unset; cursor: pointer; display: inline-flex; gap: 4px; }
+th button:focus-visible { outline: 2px solid var(--accent); border-radius: 4px; }
+th[aria-sort] button { color: var(--fg); }
+td.r, th.r { text-align: right; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--surface-2); }
+tbody tr.dim { opacity: .55; }
+.mname { font-weight: 600; display: block; }
+.badges { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.badge { display: inline-block; font-size: .72rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap; }
+.badge.good { color: var(--good); border-color: color-mix(in srgb, var(--good) 45%, transparent); background: var(--good-soft); }
+.badge.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); background: var(--warn-soft); }
+.badge.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, transparent); background: var(--bad-soft); }
+.badge.accent { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.caps { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); white-space: nowrap; }
+.caps i { font-style: normal; }
+.caps i.on { color: var(--fg); font-weight: 500; }
+.pager { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; flex-wrap: wrap; }
+.note { font-size: .85rem; color: var(--muted); display: grid; gap: 6px; max-width: 80ch; margin-top: 12px; }
+.callout { font-size: .88rem; padding: 10px 12px; border-radius: 8px; background: var(--warn-soft); color: var(--warn); }
+dialog { border: 1px solid var(--line-strong); border-radius: 12px; padding: 0; background: var(--surface); color: var(--fg); width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 48px); box-shadow: 0 20px 60px rgb(0 0 0 / .3); }
+dialog::backdrop { background: rgb(10 14 20 / .55); }
+.dlg-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.dlg-body { padding: 18px 20px 22px; display: grid; gap: 16px; }
+.kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.kv div { display: grid; gap: 2px; }
+.kv b { font-weight: 600; }
+pre.code { margin: 0; padding: 10px 12px; background: var(--surface-2); border-radius: 8px; overflow-x: auto; font-family: var(--font-mono); font-size: .82rem; line-height: 1.5; }
+.bench { display: grid; gap: 4px; font-size: .88rem; }
+.bench div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; border-bottom: 1px dashed var(--line); padding-bottom: 3px; }
+footer { border-top: 1px solid var(--line); padding-block: 20px 40px; }
+footer .wrap { display: grid; gap: 8px; font-size: .84rem; color: var(--muted); }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: .9rem; z-index: 50; }
+@media (max-width: 640px) { .hide-sm { display: none; } th, td { padding: 8px 8px; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <h1>OpenCode-modellek</h1>
+      <span class="small muted" id="srcLine"></span>
+    </div>
+    <div class="row">
+      <a class="btn" href="../">← Modellválasztó</a>
+      <button class="btn icon-btn" id="themeBtn" type="button" aria-label="Világos vagy sötét téma">◐</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="lead">
+    <p>Az <a href="https://opencode.ai" target="_blank" rel="noopener">OpenCode</a> nyílt forrású kódoló ágens a <a href="https://models.dev" target="_blank" rel="noopener">models.dev</a> katalógusából építi a modellválasztóját (<code>/models</code>). Bármelyik ott szereplő szolgáltató modelljét használhatod, ha összekötöd a fiókodat. Az OpenCode saját szolgáltatásai: a <b>Zen</b> (használat szerinti fizetés, köztük ingyenes modellek) és a <b>Go</b> (havi előfizetés nyílt kódolómodellekre).</p>
+  </section>
+
+  <section aria-label="Összefoglaló számok" class="tiles" id="tiles"></section>
+
+  <section aria-labelledby="recTitle">
+    <div class="row" style="justify-content:space-between;margin-bottom:12px"><h2 id="recTitle">Mit válassz OpenCode-ban?</h2><span class="small muted">Kattints egy névre a részletekért és a konfigurációért</span></div>
+    <div class="recs" id="recs"></div>
+  </section>
+
+  <section aria-labelledby="listTitle">
+    <h2 id="listTitle" class="sr" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Modellek</h2>
+    <div class="tabs" role="tablist" id="tabs">
+      <button role="tab" type="button" data-tab="zen" aria-selected="true">OpenCode Zen</button>
+      <button role="tab" type="button" data-tab="go" aria-selected="false">OpenCode Go</button>
+      <button role="tab" type="button" data-tab="all" aria-selected="false">Teljes katalógus</button>
+    </div>
+    <div id="tabIntro" class="note" style="margin:0 0 12px"></div>
+    <div class="tools">
+      <input type="search" id="q" placeholder="Keresés modell vagy labor szerint" aria-label="Keresés">
+      <select id="lab" aria-label="Labor"></select>
+      <label class="check"><input type="checkbox" id="fOpen"> Csak nyílt súlyú</label>
+      <label class="check" id="fFreeWrap"><input type="checkbox" id="fFree"> Csak ingyenes</label>
+      <label class="check" id="fDepWrap"><input type="checkbox" id="fDep"> Kivezetettek is</label>
+      <label class="check" id="fLabWrap" hidden><input type="checkbox" id="fLabOnly" checked> Csak laborhoz kötött modellek</label>
+    </div>
+    <div class="panel">
+      <div class="table-box"><table><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>
+      <div class="pager" id="pager"></div>
+    </div>
+    <div class="note" id="tabNote"></div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><b>Források.</b> Modell- és áradatok: <a href="https://github.com/sst/models.dev" target="_blank" rel="noopener">models.dev</a> (nyílt, közösségi adatbázis, ezt használja az OpenCode is). Az ingyenes modellek feltételei és a Go-keretek az OpenCode dokumentációjából származnak. Az árak USD / 1M token, kedvezmények nélkül.</p>
+    <p>A benchmark-értékeket a laborok maguk közlik, eltérő verzióval, effort-szinttel és időkorláttal, ezért modellek között nem hasonlíthatók össze közvetlenül. Az oldal nem rangsorol velük.</p>
+    <p>Független oldal, nem kapcsolódik az OpenCode-hoz vagy a modellszolgáltatókhoz.</p>
+  </div>
+</footer>
+
+<dialog id="dlg" aria-labelledby="dTitle"><div class="dlg-head"><h2 id="dTitle"></h2><button class="btn icon-btn ghost" type="button" data-close aria-label="Bezárás">✕</button></div><div class="dlg-body" id="dBody"></div></dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="data.js"></script>
+<script>
+"use strict";
+const D = window.OC_DATA;
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const norm = (t) => (t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const fmtN = (n) => n.toLocaleString("hu-HU");
+const fmtCtx = (n) => !n ? "–" : n >= 1e6 ? (n / 1e6).toLocaleString("hu-HU", { maximumFractionDigits: 2 }) + "M" : Math.round(n / 1000) + "K";
+function usd(v) {
+  if (v == null) return "–"; if (v === 0) return "ingyenes";
+  const d = v < 0.1 ? 3 : 2;
+  return "$" + v.toLocaleString("hu-HU", { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: d });
+}
+const labName = (l) => l ? (D.labNames[l] || l) : "–";
+const blended = (r) => r.in == null || r.out == null ? null : (r.in * 3 + r.out) / 4;
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+
+/* Ingyenes Zen/Go modellek adatkezelési feltételei – OpenCode dokumentáció (console/models, console/go), 2026. november. */
+const FREE_TERMS = {
+  "glm-5.3-flash-free": ["good", "Nem tárol, nem tanít", "A szolgáltató zero-retention szabályt követ, az adatokat nem használja tanításra."],
+  "deepseek-v4.1-flash-free": ["good", "Nem tárol, nem tanít", "A szolgáltató zero-retention szabályt követ, az adatokat nem használja tanításra."],
+  "minimax-m3.1-flash-free": ["good", "Nem tárol, nem tanít", "A szolgáltató zero-retention szabályt követ, az adatokat nem használja tanításra."],
+  "hy4-flash-free": ["good", "Nem tárol, nem tanít", "A szolgáltató zero-retention szabályt követ, az adatokat nem használja tanításra."],
+  "longcat-2.5-free": ["good", "Nem tárol · napi 100 kérés", "Zero-retention, nem tanít; napi 100 kérés a korlát, a szolgáltatás Kínában fut."],
+  "beam-free": ["warn", "30 napig tárol", "Nem tanít az adatokon, de biztonsági okból 30 napig megőrzi őket. Egyes országokban nem érhető el."],
+  "inkling-2-small-free": ["bad", "Tanít · EU-ban nem elérhető", "A szolgáltató megőrzi az adatokat és tanításra használhatja. Az EU-ban nem érhető el."],
+  "big-pickle": ["warn", "Visszajelzés-gyűjtés", "„Stealth” modell: az ingyenes időszakot visszajelzés-gyűjtésre és a modell fejlesztésére használják."],
+  "iceman-free": ["warn", "Visszajelzés-gyűjtés", "„Stealth” modell: az ingyenes időszakot visszajelzés-gyűjtésre és a modell fejlesztésére használják."],
+  "iceman-contributor-free": ["warn", "Visszajelzés-gyűjtés", "Contributor-változat: a használatot a modell fejlesztésére fordítják."],
+  "flint-40b-free": ["warn", "Visszajelzés-gyűjtés", "Az ingyenes időszakot visszajelzés-gyűjtésre és a modell fejlesztésére használják."],
+  "mimo-v2.6-flash-free": ["warn", "Visszajelzés-gyűjtés", "Az ingyenes időszakot visszajelzés-gyűjtésre és a modell fejlesztésére használják."],
+  "nemotron-3.5-lightning-free": ["warn", "Visszajelzés-gyűjtés", "Az ingyenes időszakot visszajelzés-gyűjtésre és a modell fejlesztésére használják."],
+  "nemotron-3.5-super-vl-free": ["warn", "Visszajelzés-gyűjtés", "Az ingyenes időszakot visszajelzés-gyűjtésre és a modell fejlesztésére használják."],
+  "muse-spark-1.2-contributor": ["bad", "Tanít az adatokon", "Contributor-változat: a fizetős végpont tanít a kérések adatain; a Go-ban külön engedélyezni kell."],
+  "muse-spark-1.3-contributor": ["bad", "Tanít az adatokon", "Contributor-változat: a fizetős végpont tanít a kérések adatain; a Go-ban külön engedélyezni kell."]
+};
+
+/* Válogatott ajánlások – a döntés indoklása az ELEMZES.md-ben. */
+const RECS = [
+  { title: "A legnehezebb kódolási feladatokra", desc: "Nagy refaktorálás, architektúra, hosszú önálló ágens-munka.", items: [
+    ["zen", "claude-opus-5-5", "Erős ágens-kódolás, 1M kontextus, $4 / $20."],
+    ["zen", "gpt-6.1-sol", "Az OpenAI kódoló-ágens vonala, $2 / $10: a csúcskategóriában a legolcsóbb."],
+    ["zen", "gemini-4-carbon", "A Google legerősebb modellje, $2 / $10."],
+    ["zen", "claude-fable-5-2", "A legkeményebb problémákra. Drága ($8 / $40), napi munkára túlzás."] ] },
+  { title: "Napi fejlesztéshez, jó áron", desc: "A legtöbb munkára elég, és a költség is kordában marad.", items: [
+    ["zen", "claude-sonnet-5-5", "Megbízható általános kódoló, $2 / $10."],
+    ["zen", "gemini-3.8-flash", "Gyors és olcsó ($0,75 / $3,75), mégis hosszú ágens-feladatokra hangolták."],
+    ["zen", "gemini-4-hydrogen", "Gemini 4 hétköznapi kódolásra, négy gondolkodási szinttel."],
+    ["zen", "glm-5.3", "Nyílt súlyú, erős ágens-kódoló; a Go-előfizetésben is elérhető."] ] },
+  { title: "Olcsón, nagy mennyiségben", desc: "Al-ágensek, kódkeresés, tesztírás, egyszerű javítások.", items: [
+    ["zen", "gpt-6-luna", "$0,10 / $0,50, 1M kontextus."],
+    ["zen", "claude-haiku-5-5", "$0,10 / $0,50 (100K tokenig), 1M kontextus."],
+    ["zen", "glm-5.3-flash", "Nyílt súlyú, $0,15 / $0,50."],
+    ["zen", "qwen3.8-flash", "$0,15 / $0,47, képbemenettel."] ] },
+  { title: "Ingyen, adatvédelmi feltételekkel", desc: "Csak ott használd, ahol a feltételek megfelelnek. Ügyfélkódhoz a „nem tárol” jelölésűeket válaszd.", items: [
+    ["zen", "glm-5.3-flash-free", "Nem tárol, nem tanít."],
+    ["zen", "deepseek-v4.1-flash-free", "Nem tárol, nem tanít."],
+    ["zen", "minimax-m3.1-flash-free", "Nem tárol, nem tanít."],
+    ["zen", "big-pickle", "Ingyenes, de visszajelzést gyűjt; érzékeny kódhoz nem ajánlott."] ] },
+  { title: "Havidíjas OpenCode Go ($10/hó)", desc: "Nyílt kódolómodellek közös kerettel. A kérésszám a Go-csomag becslése havonta.", items: [
+    ["go", "deepseek-v4.1-flash", "≈ 216 670 kérés/hó: a legtöbb a csomagban."],
+    ["go", "mimo-v2.6-flash", "≈ 150 400 kérés/hó."],
+    ["go", "glm-5.3-flash", "≈ 31 580 kérés/hó, jó egyensúly."],
+    ["go", "kimi-k3", "Erős, de csak ≈ 490 kérés/hó fér bele."] ] }
+];
+
+/* ============================== ÁLLAPOT ============================== */
+const state = { tab: "zen", q: "", lab: "", open: false, free: false, dep: false, labOnly: true, sort: { zen: ["price", 1], go: ["req", -1], all: ["rel", -1] }, page: 0 };
+const PAGE = 50;
+
+function zenRows() { return D.zen; }
+function goRows() { return D.go; }
+function allRows() { return D.unique; }
+const reqNum = (r) => r.req == null || r.req === "Unlimited" ? null : +String(r.req).replace(/[^\d]/g, "");
+const limNum = (s) => s == null ? null : /unlimited/i.test(s) ? Infinity : +String(s).replace(/[^\d.]/g, "");
+
+/* ============================== OSZLOPOK ============================== */
+const capCell = (r) => `<span class="caps" title="Eszközhívás · gondolkodás · képbemenet"><i class="${r.tools ? "on" : ""}">eszköz</i> · <i class="${r.reas ? "on" : ""}">gond.</i> · <i class="${r.img ? "on" : ""}">kép</i></span>`;
+function nameCell(r, idText) {
+  const b = [];
+  if (r.ow === 1) b.push('<span class="badge good">nyílt súlyú</span>');
+  if (r.st === "deprecated") b.push('<span class="badge">kivezetve</span>');
+  if (r.st === "beta" || r.st === "alpha") b.push(`<span class="badge warn">${esc(r.st)}</span>`);
+  const ft = FREE_TERMS[r.id];
+  if (ft && (r.in === 0 || /contributor/.test(r.id))) b.push(`<span class="badge ${ft[0]}" title="${esc(ft[2])}">${esc(ft[1])}</span>`);
+  if (r.zen && state.tab === "all") b.push('<span class="badge accent">Zen</span>');
+  if (r.go && state.tab === "all") b.push('<span class="badge accent">Go</span>');
+  return `<span class="mname">${esc(r.n)}</span><span class="badges"><span class="small muted">${esc(labName(r.lab))}${idText ? " · " : ""}</span>${idText ? `<span class="mono muted">${esc(idText)}</span>` : ""} ${b.join("")}</span>`;
+}
+const COLS = {
+  zen: [
+    { k: "name", l: "Modell", v: (r) => norm(r.n), c: (r) => nameCell(r, "opencode/" + r.id) },
+    { k: "rel", l: "Kiadás", v: (r) => r.rel, c: (r) => `<span class="num">${esc(r.rel || "–")}</span>`, cls: "hide-sm" },
+    { k: "ctx", l: "Kontextus", v: (r) => r.ctx, c: (r) => `<span class="num">${fmtCtx(r.ctx)}</span>`, cls: "r" },
+    { k: "price", l: "Be / Ki $/1M", v: (r) => blended(r), c: (r) => `<span class="num">${r.in === 0 && r.out === 0 ? "ingyenes" : usd(r.in) + " / " + usd(r.out)}</span>${r.long ? ' <span class="muted small" title="Hosszú promptnál magasabb díjsáv">*</span>' : ""}`, cls: "r" },
+    { k: "cr", l: "Cache-olvasás", v: (r) => r.cr, c: (r) => `<span class="num">${usd(r.cr)}</span>`, cls: "r hide-sm" },
+    { k: "caps", l: "Képességek", c: capCell, nosort: true, cls: "hide-sm" }
+  ],
+  go: [
+    { k: "name", l: "Modell", v: (r) => norm(r.n), c: (r) => nameCell(r, "opencode-go/" + r.id) },
+    { k: "req", l: "Kérés / hó (Go)", v: reqNum, c: (r) => `<span class="num">${r.req == null ? "–" : r.req === "Unlimited" ? "korlátlan*" : esc(r.req)}</span>`, cls: "r" },
+    { k: "lim", l: "Keret (Go / Plus)", v: (r) => limNum(r.lim), c: (r) => `<span class="num">${r.lim ? (/unlimited/i.test(r.lim) ? "korlátlan" : esc(r.lim) + " / " + esc(r.limPlus || "–")) : "–"}</span>`, cls: "r" },
+    { k: "price", l: "Be / Ki $/1M", v: (r) => blended(r), c: (r) => `<span class="num">${r.in === 0 && r.out === 0 ? "ingyenes" : usd(r.in) + " / " + usd(r.out)}</span>`, cls: "r" },
+    { k: "ctx", l: "Kontextus", v: (r) => r.ctx, c: (r) => `<span class="num">${fmtCtx(r.ctx)}</span>`, cls: "r hide-sm" },
+    { k: "caps", l: "Képességek", c: capCell, nosort: true, cls: "hide-sm" }
+  ],
+  all: [
+    { k: "name", l: "Modell", v: (r) => norm(r.n), c: (r) => nameCell(r, "") },
+    { k: "rel", l: "Kiadás", v: (r) => r.rel, c: (r) => `<span class="num">${esc(r.rel || "–")}</span>`, cls: "hide-sm" },
+    { k: "ctx", l: "Kontextus", v: (r) => r.ctx, c: (r) => `<span class="num">${fmtCtx(r.ctx)}</span>`, cls: "r" },
+    { k: "oprice", l: "Hivatalos ár", v: (r) => r.oin == null ? null : (r.oin * 3 + r.oout) / 4, c: (r) => `<span class="num">${r.oin == null ? "–" : usd(r.oin) + " / " + usd(r.oout)}</span>`, cls: "r" },
+    { k: "price", l: "Legolcsóbb ajánlat", v: (r) => blended(r), c: (r) => r.in == null ? '<span class="muted">–</span>' : `<span class="num">${usd(r.in)} / ${usd(r.out)}</span>${r.oin != null && blended(r) < ((r.oin * 3 + r.oout) / 4) * 0.6 ? ' <span class="badge warn" title="40%-nál nagyobb kedvezmény a hivatalos árhoz képest: ellenőrizetlen viszonteladó lehet">gyanús</span>' : ""}<div class="small muted">${esc(r.cp || "")}</div>`, cls: "r" },
+    { k: "np", l: "Szolgáltató", v: (r) => r.np, c: (r) => `<span class="num">${r.np}</span>`, cls: "r" },
+    { k: "caps", l: "Képességek", c: capCell, nosort: true, cls: "hide-sm" }
+  ]
+};
+
+/* ============================== RENDER ============================== */
+function filtered() {
+  const src = state.tab === "zen" ? zenRows() : state.tab === "go" ? goRows() : allRows();
+  const q = norm(state.q).trim();
+  return src.filter((r) =>
+    (state.dep || state.tab === "all" || r.st !== "deprecated") &&
+    (!state.lab || r.lab === state.lab) &&
+    (!state.open || r.ow === 1) &&
+    (!state.free || (state.tab === "all" ? r.free : r.in === 0 && r.out === 0)) &&
+    (state.tab !== "all" || !state.labOnly || r.lab) &&
+    (!q || norm(`${r.n} ${labName(r.lab)} ${r.id || r.key} ${r.fam || ""}`).includes(q)));
+}
+function renderTable() {
+  const cols = COLS[state.tab], [sk, sd] = state.sort[state.tab];
+  const col = cols.find((c) => c.k === sk) || cols[0];
+  const rows = filtered().sort((a, b) => {
+    const x = col.v(a), y = col.v(b);
+    if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1;
+    return (x < y ? -1 : x > y ? 1 : 0) * sd;
+  });
+  $("#thead").innerHTML = cols.map((c) => {
+    if (c.nosort) return `<th scope="col" class="${c.cls || ""}">${c.l}</th>`;
+    const on = c.k === sk;
+    return `<th scope="col" class="${c.cls || ""}"${on ? ` aria-sort="${sd > 0 ? "ascending" : "descending"}"` : ""}><button type="button" data-sort="${c.k}">${c.l}<span aria-hidden="true">${on ? (sd > 0 ? "↑" : "↓") : ""}</span></button></th>`;
+  }).join("");
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE));
+  state.page = Math.min(state.page, pages - 1);
+  const slice = state.tab === "all" ? rows.slice(state.page * PAGE, state.page * PAGE + PAGE) : rows;
+  $("#tbody").innerHTML = slice.length ? slice.map((r) => `<tr tabindex="0" data-k="${esc(r.id || r.key)}" class="${r.st === "deprecated" ? "dim" : ""}">${cols.map((c) => `<td class="${c.cls || ""}">${c.c(r)}</td>`).join("")}</tr>`).join("")
+    : `<tr><td colspan="${cols.length}" class="muted" style="text-align:center;padding:28px;cursor:default">Nincs a szűrésnek megfelelő modell.</td></tr>`;
+  const total = (state.tab === "zen" ? zenRows() : state.tab === "go" ? goRows() : allRows()).length;
+  $("#pager").innerHTML = `<span class="small muted">${fmtN(rows.length)} találat / ${fmtN(total)}</span>` + (state.tab === "all" && pages > 1 ? `<span class="row"><button class="btn" type="button" data-page="-1" ${state.page === 0 ? "disabled" : ""}>Előző</button><span class="small muted num">${state.page + 1} / ${pages}</span><button class="btn" type="button" data-page="1" ${state.page >= pages - 1 ? "disabled" : ""}>Következő</button></span>` : "");
+}
+function renderFilters() {
+  const src = state.tab === "zen" ? zenRows() : state.tab === "go" ? goRows() : allRows();
+  const counts = {};
+  src.forEach((r) => { if (r.lab && (state.tab === "all" || r.st !== "deprecated")) counts[r.lab] = (counts[r.lab] || 0) + 1; });
+  const labs = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+  if (state.lab && !counts[state.lab]) state.lab = "";
+  $("#lab").innerHTML = `<option value="">Minden labor</option>` + labs.map((l) => `<option value="${esc(l)}" ${l === state.lab ? "selected" : ""}>${esc(labName(l))} (${counts[l]})</option>`).join("");
+  $("#fDepWrap").hidden = state.tab === "all";
+  $("#fLabWrap").hidden = state.tab !== "all";
+  const intro = {
+    zen: "A Zen használat szerint számláz, a legtöbb modellt a labor listaárán adja. Az ingyenes modellek időszakosak, és eltérő adatkezelési feltételekkel futnak (lásd a jelöléseket).",
+    go: "A Go havidíjas: Go $10, Go Plus $40, Go Teams $20/fő havonta. A „keret” azt mutatja, mennyi használat fér bele, ha csak azt az egy modellt használod. Ötórás ablakban a havi keret 20%-a, hetente 50%-a használható el.",
+    all: "Minden modell, amit az OpenCode a models.dev-ből felkínál, szolgáltatóktól függetlenül összevonva. A „hivatalos ár” a labor saját API-ja, a „legolcsóbb ajánlat” bármelyik harmadik fél."
+  };
+  $("#tabIntro").textContent = intro[state.tab];
+  const notes = {
+    zen: "* Hosszú promptnál (pl. 200K vagy 272K token felett) magasabb díjsáv érvényes. Konfiguráció: <code>\"model\": \"opencode/&lt;azonosító&gt;\"</code>. Az ingyenes modellek a <code>OPENCODE_DISABLE_FREE_MODELS=1</code> beállítással elrejthetők.",
+    go: "* A korlátlan modellek csak korlátozott ideig ingyenesek. A kérésszám az OpenCode becslése tipikus kódolási kérésekre (sok cache-elt bemenet, rövid kimenet). Konfiguráció: <code>\"model\": \"opencode-go/&lt;azonosító&gt;\"</code>.",
+    all: "A „gyanús” jelölés: a legolcsóbb ajánlat 40%-nál többel a hivatalos ár alatt van. Ez gyakran ellenőrizetlen viszonteladót jelent; érzékeny kódot ilyen szolgáltatón keresztül ne küldj. A „laborhoz nem kötött” bejegyzések szolgáltató-specifikus nevek, gyakran ugyanannak a modellnek másik címkéje."
+  };
+  $("#tabNote").innerHTML = `<p>${notes[state.tab]}</p>`;
+}
+function renderTiles() {
+  const zenA = D.zen.filter((r) => r.st !== "deprecated"), goA = D.go.filter((r) => r.st !== "deprecated");
+  const tiles = [
+    [fmtN(D.totals.providers), "szolgáltató a katalógusban"],
+    [fmtN(D.totals.active), "aktív modellbejegyzés"],
+    [fmtN(D.unique.filter((r) => r.lab).length), "laborhoz kötött modell"],
+    [fmtN(zenA.length), `modell a Zenben, ebből ${zenA.filter((r) => r.in === 0 && r.out === 0).length} ingyenes`],
+    [fmtN(goA.length), "modell a Go-előfizetésben"],
+    [Math.round(D.unique.filter((r) => r.lab && r.ow === 1).length / D.unique.filter((r) => r.lab).length * 100) + "%", "nyílt súlyú a labor-modellek közül"]
+  ];
+  $("#tiles").innerHTML = tiles.map(([n, l]) => `<div class="panel tile"><b>${n}</b><span class="small muted">${l}</span></div>`).join("");
+  $("#srcLine").textContent = `models.dev ${D.commitDate || ""} (${D.commit || "?"}) · ${fmtN(D.totals.providerModels)} bejegyzés feldolgozva`;
+}
+function findRow(kind, id) { return (kind === "go" ? D.go : kind === "zen" ? D.zen : D.unique).find((r) => (r.id || r.key) === id); }
+function renderRecs() {
+  $("#recs").innerHTML = RECS.map((g) => `<article class="panel rec"><div><h3>${esc(g.title)}</h3><p class="small muted">${esc(g.desc)}</p></div><ul>${g.items.map(([kind, id, why]) => {
+    const r = findRow(kind, id); if (!r) return "";
+    return `<li><button type="button" data-open="${kind}:${esc(id)}">${esc(r.n)}</button><span class="why">${esc(why)}</span></li>`;
+  }).join("")}</ul></article>`).join("");
+}
+
+/* ============================== ADATLAP ============================== */
+function openDetail(kind, id) {
+  const r = findRow(kind, id); if (!r) return;
+  const u = kind === "all" ? r : D.unique.find((x) => (kind === "zen" ? x.zid : x.gid) === r.id) || D.unique.find((x) => x.zid === r.id || x.gid === r.id);
+  const ft = FREE_TERMS[r.id];
+  const ids = [];
+  if (kind === "zen") ids.push("opencode/" + r.id); else if (kind === "go") ids.push("opencode-go/" + r.id);
+  if (u) { if (u.zid && kind !== "zen") ids.push("opencode/" + u.zid); if (u.gid && kind !== "go") ids.push("opencode-go/" + u.gid); if (u.oid && u.lab) ids.push(u.lab + "/" + u.oid); }
+  const bench = (r.bench && r.bench.length ? r.bench : u ? u.bench : []) || [];
+  $("#dTitle").textContent = r.n;
+  $("#dBody").innerHTML = `
+    <div class="row small muted">${esc(labName(r.lab))}${r.fam ? " · " + esc(r.fam) : ""}${r.rel ? " · kiadás: " + esc(r.rel) : ""}${r.kn ? " · tudás: " + esc(r.kn) : ""}</div>
+    ${ft ? `<p class="callout" style="${ft[0] === "good" ? "background:var(--good-soft);color:var(--good)" : ft[0] === "bad" ? "background:var(--bad-soft);color:var(--bad)" : ""}"><b>${esc(ft[1])}.</b> ${esc(ft[2])}</p>` : ""}
+    <div class="kv">
+      <div><span class="label">Kontextus</span><b class="num">${fmtCtx(r.ctx)}</b></div>
+      <div><span class="label">${kind === "all" ? "Legolcsóbb ajánlat" : "Ár be / ki ($/1M)"}</span><b class="num">${r.in === 0 && r.out === 0 ? "ingyenes" : usd(r.in) + " / " + usd(r.out)}</b>${kind === "all" && r.cp ? `<span class="small muted">${esc(r.cp)}</span>` : ""}</div>
+      ${u && u.oin != null ? `<div><span class="label">Hivatalos ár</span><b class="num">${usd(u.oin)} / ${usd(u.oout)}</b></div>` : ""}
+      ${r.cr != null ? `<div><span class="label">Cache-olvasás</span><b class="num">${usd(r.cr)}</b></div>` : ""}
+      ${r.lim ? `<div><span class="label">Go-keret / hó</span><b class="num">${esc(r.lim)}</b><span class="small muted">Plus: ${esc(r.limPlus || "–")}</span></div>` : ""}
+      ${r.req ? `<div><span class="label">Kérés / hó (Go)</span><b class="num">${esc(r.req === "Unlimited" ? "korlátlan" : r.req)}</b></div>` : ""}
+      <div><span class="label">Súlyok</span><b>${r.ow === 1 ? "nyílt" : r.ow === 0 ? "zárt" : "nincs adat"}</b></div>
+      <div><span class="label">Képességek</span><b class="small">${[r.tools ? "eszközhívás" : "", r.reas ? "gondolkodás" : "", r.img ? "kép" : ""].filter(Boolean).join(", ") || "–"}</b></div>
+      ${u ? `<div><span class="label">Szolgáltatók</span><b class="num">${u.np}</b></div>` : ""}
+    </div>
+    ${ids.length ? `<div class="bench"><span class="label">Kiválasztás OpenCode-ban</span>
+      <pre class="code" id="cfg">${esc(`// opencode.json\n{\n  "model": "${ids[0]}"\n}\n\n# egyszeri futtatás\nopencode run --model ${ids[0]} "..."`)}</pre>
+      ${ids.length > 1 ? `<p class="small muted">Más elérési utak: ${ids.slice(1).map((x) => `<code>${esc(x)}</code>`).join(", ")}</p>` : ""}
+      <div><button class="btn" type="button" id="copyCfg">Konfiguráció másolása</button></div></div>` : `<p class="small muted">Ez a modell nincs a Zenben vagy a Go-ban; a saját szolgáltatói fiókoddal érhető el, a <code>/connect</code> parancs után.</p>`}
+    ${bench.length ? `<div class="bench"><span class="label">A labor által közölt eredmények</span>${bench.map((b) => `<div><span>${esc(b[0])}${b[3] ? ` <span class="small muted">(${esc(b[3])})</span>` : ""}</span><span class="num">${esc(b[1])}${b[2] && b[2] !== "score" ? " " + esc(b[2]) : ""}</span></div>`).join("")}<p class="small muted">Eltérő verziók és beállítások: modellek között nem összehasonlítható.</p></div>` : ""}`;
+  const cb = $("#copyCfg");
+  if (cb) cb.onclick = async () => { const t = $("#cfg").textContent; try { await navigator.clipboard.writeText(t); toast("Vágólapra másolva."); } catch (e) { const s = getSelection(), rg = document.createRange(); rg.selectNodeContents($("#cfg")); s.removeAllRanges(); s.addRange(rg); toast("Kijelölve, másold ki (Ctrl+C)."); } };
+  if (!$("#dlg").open) $("#dlg").showModal();
+}
+let tt; function toast(m) { const t = $("#toast"); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => (t.hidden = true), 2400); }
+
+/* ============================== ESEMÉNYEK ============================== */
+$("#tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (!b) return; state.tab = b.dataset.tab; state.page = 0; state.free = false; $("#fFree").checked = false; document.querySelectorAll("#tabs button").forEach((x) => x.setAttribute("aria-selected", x === b)); renderFilters(); renderTable(); });
+$("#q").addEventListener("input", (e) => { state.q = e.target.value; state.page = 0; renderTable(); });
+$("#lab").addEventListener("change", (e) => { state.lab = e.target.value; state.page = 0; renderTable(); });
+[["#fOpen", "open"], ["#fFree", "free"], ["#fDep", "dep"], ["#fLabOnly", "labOnly"]].forEach(([s, k]) => $(s).addEventListener("change", (e) => { state[k] = e.target.checked; state.page = 0; renderFilters(); renderTable(); }));
+$("#thead").addEventListener("click", (e) => { const b = e.target.closest("[data-sort]"); if (!b) return; const k = b.dataset.sort, cur = state.sort[state.tab]; state.sort[state.tab] = cur[0] === k ? [k, -cur[1]] : [k, ["name", "price", "oprice", "cr"].includes(k) ? 1 : -1]; renderTable(); });
+$("#pager").addEventListener("click", (e) => { const b = e.target.closest("[data-page]"); if (!b) return; state.page += +b.dataset.page; renderTable(); $("#tabs").scrollIntoView({ block: "start" }); });
+$("#tbody").addEventListener("click", (e) => { const tr = e.target.closest("tr[data-k]"); if (tr) openDetail(state.tab, tr.dataset.k); });
+$("#tbody").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.matches("tr[data-k]")) openDetail(state.tab, e.target.dataset.k); });
+$("#recs").addEventListener("click", (e) => { const b = e.target.closest("[data-open]"); if (!b) return; const [k, ...id] = b.dataset.open.split(":"); openDetail(k, id.join(":")); });
+$("#dlg").addEventListener("click", (e) => { if (e.target === $("#dlg") || e.target.closest("[data-close]")) $("#dlg").close(); });
+$("#themeBtn").addEventListener("click", () => { const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); const n = cur === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = n; store.set("modellvalaszto.theme", n); });
+document.addEventListener("keydown", (e) => { if (e.key === "/" && !e.target.matches("input, select")) { e.preventDefault(); $("#q").focus(); } });
+
+(function init() {
+  const th = store.get("modellvalaszto.theme"); if (th === "dark" || th === "light") document.documentElement.dataset.theme = th;
+  if (!D) { document.querySelector("main").innerHTML = '<p class="panel" style="padding:20px">Az adatfájl (data.js) nem töltődött be. Futtasd a build-szkriptet, vagy töltsd le újra az oldalt.</p>'; return; }
+  renderTiles(); renderRecs(); renderFilters(); renderTable();
+})();
+</script>
+
+</body>
+</html>

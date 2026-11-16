@@ -1,0 +1,7 @@
+{
+  "name": "opencode-modellek-build",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "node build.mjs ../../.cache/models.dev ../../.cache/opencode/services/site/src/docs/content ../data.js" },
+  "dependencies": { "smol-toml": "1.3.1" }
+}
