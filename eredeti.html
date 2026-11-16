@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="hu" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Modell Előválasztó & Auto-Router Matrix</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#151e2e',
+                            900: '#0f172a',
+                            950: '#080d1a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .model-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .model-card:hover {
+            transform: translateY(-4px);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.4);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.55; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 2.5s infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <!-- Top Navigation & Live Sync Bar -->
+    <nav class="sticky top-0 z-40 backdrop-blur-xl bg-slate-900/80 border-b border-slate-800 px-4 sm:px-6 lg:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-extrabold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-indigo-400">
+                            AI Előválasztó & Auto-Router
+                        </span>
+                        <span id="modelCountBadge" class="px-2 py-0.5 text-xs font-mono font-semibold rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                            22 modell
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400 hidden sm:block">Gemini • ChatGPT • Claude • Mistral • DeepSeek — Teljes ökoszisztéma mátrix</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons: Live Sync, Add Model, Reset -->
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <button id="liveSyncBtn" onclick="openSyncModal()" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition-all shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span>Élő API Szinkronizálás</span>
+                </button>
+
+                <button onclick="openAddModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/20">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span>+ Új Modell</span>
+                </button>
+
+                <button onclick="toggleTheme()" id="themeToggleBtn" title="Téma váltása (Sötét / Világos)" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors">
+                    <svg id="themeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero & Interactive Task Auto-Router -->
+    <header class="relative overflow-hidden border-b border-slate-800/80 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 pt-10 pb-10 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-7">
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 mb-3">
+                    🌱 Tudatos Token- és Energiaoptimalizált Modellválasztó
+                </span>
+                <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-3">
+                    Írd le a feladatot, mi kiválasztjuk az <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400">optimális modellt</span>
+                </h1>
+                <p class="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto">
+                    Nem minden feladathoz kell óriási, energiaigényes „Deep Reasoning” modell. Teszteld az intelligens előválasztót, vagy böngészd a teljes 5-szolgáltatós katalógust!
+                </p>
+            </div>
+
+            <!-- Interactive Task Prompt Input -->
+            <div class="bg-slate-800/70 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-slate-700/80 shadow-2xl">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="relative flex-grow">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="taskPromptInput"
+                            class="w-full pl-11 pr-10 py-3.5 text-sm sm:text-base bg-slate-900/90 text-white placeholder-slate-400 rounded-xl border border-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                            placeholder="Pl.: '500 oldalas PDF elemzése', 'Docker és React kódolás olcsón', 'Saját szerveren futó nyílt modell'..."
+                        >
+                        <button id="clearPromptBtn" onclick="clearTaskPrompt()" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                    <button onclick="runTaskRecommender()" class="px-6 py-3.5 rounded-xl font-semibold text-sm sm:text-base bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white shadow-lg shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 shrink-0">
+                        <span>Modell Ajánlása</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    </button>
+                </div>
+
+                <!-- Sample Prompt Chips -->
+                <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                    <span class="text-slate-400 font-medium mr-1">Gyors próbák:</span>
+                    <button onclick="setSamplePrompt('Komplex React és Docker mikroszerviz architektúra kódolása és hibakeresése')" class="px-2.5 py-1 rounded-lg bg-slate-700/60 hover:bg-slate-700 text-slate-300 transition-colors">
+                        💻 Kódolás & DevOps
+                    </button>
+                    <button onclick="setSamplePrompt('500 oldalas jogi és pénzügyi PDF dokumentumok összefoglalása és elemzése')" class="px-2.5 py-1 rounded-lg bg-slate-700/60 hover:bg-slate-700 text-slate-300 transition-colors">
+                        📚 Óriási PDF / 2M kontextus
+                    </button>
+                    <button onclick="setSamplePrompt('Nehéz matematikai bizonyítás, algoritmus-optimalizálás és logikai levezetés')" class="px-2.5 py-1 rounded-lg bg-slate-700/60 hover:bg-slate-700 text-slate-300 transition-colors">
+                        🧠 Mély Érvelés (Reasoning)
+                    </button>
+                    <button onclick="setSamplePrompt('Saját szerveren (self-hosted) futtatható, nyílt forráskódú modell adatvédelmi projekthez')" class="px-2.5 py-1 rounded-lg bg-slate-700/60 hover:bg-slate-700 text-slate-300 transition-colors">
+                        🔓 Helyi / Open-Weight
+                    </button>
+                    <button onclick="setSamplePrompt('Tömeges e-mail kategorizálás és gyors chatbot válaszok minimális energia- és tokenköltséggel')" class="px-2.5 py-1 rounded-lg bg-slate-700/60 hover:bg-slate-700 text-slate-300 transition-colors">
+                        ⚡ Gyors & Zöld (Alacsony fogyasztás)
+                    </button>
+                    <button onclick="setSamplePrompt('Árnyalt magyar nyelvű esszé, kampányszöveg és kreatív történetmesélés klisék nélkül')" class="px-2.5 py-1 rounded-lg bg-slate-700/60 hover:bg-slate-700 text-slate-300 transition-colors">
+                        ✍️ Kreatív magyar szövegírás
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dynamic Auto-Router Recommendation Panel -->
+            <div id="recommendationPanel" class="hidden mt-6 bg-gradient-to-br from-indigo-950/60 via-slate-900 to-slate-900 rounded-2xl border border-indigo-500/40 p-5 shadow-xl">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-800">
+                    <div class="flex items-center gap-2.5">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-indigo-500 text-white">Auto-Router Eredmény</span>
+                        <h3 id="recTitle" class="text-base sm:text-lg font-bold text-white">Top 3 ajánlott modell a feladatodhoz</h3>
+                    </div>
+                    <button onclick="closeRecommendationPanel()" class="text-xs text-slate-400 hover:text-white flex items-center gap-1">
+                        <span>Bezárás</span> ✕
+                    </button>
+                </div>
+
+                <!-- Eco / Efficiency Tip Banner -->
+                <div id="ecoTipBanner" class="mb-4 p-3 rounded-xl bg-emerald-950/50 border border-emerald-500/30 flex items-start gap-3 text-xs sm:text-sm text-emerald-200">
+                    <span class="text-lg">🌿</span>
+                    <div id="ecoTipText"></div>
+                </div>
+
+                <!-- Top 3 Recommended Cards -->
+                <div id="recommendedCardsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Filter & Catalog Section -->
+    <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Multi-Dimensional Filter Controls -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 mb-8 space-y-4 shadow-md">
+            
+            <!-- Row 1: Provider Tabs -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+                <div class="flex items-center gap-2 flex-wrap" id="providerFilterContainer">
+                    <!-- Populated via JS -->
+                </div>
+
+                <!-- Secondary Filters: License & Efficiency -->
+                <div class="flex items-center gap-2 flex-wrap">
+                    <select id="licenseFilter" onchange="applyFilters()" class="bg-slate-800 text-slate-200 text-xs font-medium rounded-xl px-3 py-2 border border-slate-700 focus:border-indigo-500 outline-none">
+                        <option value="ALL">🔓 Minden licenc (Zárt + Nyílt)</option>
+                        <option value="OPEN">Nyílt súlyozású (Open-Weight / Helyi)</option>
+                        <option value="PROPRIETARY">Zárt / Felhő API (Proprietary)</option>
+                    </select>
+
+                    <select id="energyFilter" onchange="applyFilters()" class="bg-slate-800 text-slate-200 text-xs font-medium rounded-xl px-3 py-2 border border-slate-700 focus:border-indigo-500 outline-none">
+                        <option value="ALL">⚡ Minden energia- / költségszint</option>
+                        <option value="LOW">🌱 Alacsony energiaigény (Flash / Mini / Haiku)</option>
+                        <option value="MEDIUM">⚖️ Kiegyensúlyozott (Pro / Sonnet / V3)</option>
+                        <option value="HIGH">🔥 Magas számítási igény (Deep Reasoning / Opus)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 2: Task Category Pills -->
+            <div>
+                <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center justify-between">
+                    <span>Szűrés Feladattípus Szerint:</span>
+                    <button onclick="resetAllFilters()" class="text-indigo-400 hover:text-indigo-300 font-normal normal-case">Szűrők alaphelyzetbe állítása</button>
+                </div>
+                <div class="flex flex-wrap gap-2" id="categoryFilterContainer">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Status Bar -->
+        <div class="flex items-center justify-between mb-6 px-1">
+            <div class="text-sm text-slate-400">
+                Megjelenítve: <strong id="visibleCount" class="text-white">0</strong> modell (összesen <span id="totalCount">0</span> a katalógusban)
+            </div>
+            <div class="text-xs text-slate-400 hidden sm:block">
+                💡 Tipp: Jelölj be 2-3 modellt a kártyák jobb felső sarkában a közvetlen összehasonlításhoz!
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="noResults" class="hidden text-center py-16 bg-slate-900/40 rounded-3xl border border-slate-800">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-800 mb-4 text-2xl">
+                🔍
+            </div>
+            <h3 class="text-xl font-bold text-white">Nincs a szűrésnek megfelelő modell</h3>
+            <p class="text-slate-400 mt-2 text-sm max-w-md mx-auto">Próbálj meg más szolgáltatót, energia-kategóriát választani, vagy állítsd alaphelyzetbe a szűrőket.</p>
+            <button onclick="resetAllFilters()" class="mt-4 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold">
+                Minden modell megjelenítése
+            </button>
+        </div>
+
+        <!-- Models Grid -->
+        <div id="modelsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Populated via JS -->
+        </div>
+
+    </main>
+
+    <!-- Floating Comparison Bar -->
+    <div id="compareBar" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[95%] max-w-3xl bg-slate-900/95 backdrop-blur-xl border border-indigo-500/50 rounded-2xl p-3.5 shadow-2xl flex items-center justify-between gap-4">
+        <div class="flex items-center gap-2 flex-wrap" id="comparePills"></div>
+        <div class="flex items-center gap-2 shrink-0">
+            <button onclick="clearComparison()" class="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800">
+                Törlés
+            </button>
+            <button onclick="openCompareModal()" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg">
+                Összehasonlítás megnyitása
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL 1: Live API Sync (OpenRouter + Latest Releases) -->
+    <div id="syncModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-2xl w-full p-6 shadow-2xl max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
+                    <h2 class="text-xl font-bold text-white">Élő Modell Katalógus Szinkronizálása</h2>
+                </div>
+                <button onclick="closeSyncModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+            </div>
+
+            <div class="py-4 text-sm text-slate-300 space-y-4 overflow-y-auto flex-grow">
+                <p>
+                    Lekérdezheted a legfrissebb publikus modelleket közvetlenül az <strong>OpenRouter API</strong>-ból (<code class="text-xs bg-slate-800 px-1.5 py-0.5 rounded text-indigo-300">https://openrouter.ai/api/v1/models</code>) a 5 fő szolgáltatóra (Google, OpenAI, Anthropic, Mistral, DeepSeek) szűrve.
+                </p>
+
+                <div class="flex items-center gap-3">
+                    <button onclick="fetchLiveOpenRouterModels()" id="fetchApiBtn" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm flex items-center gap-2 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span>Élő API Lekérdezés Indítása</span>
+                    </button>
+                    <span id="syncStatusText" class="text-xs text-slate-400">Kattints a gombra a frissítéshez.</span>
+                </div>
+
+                <div id="liveModelsContainer" class="space-y-2.5 mt-4"></div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-800 flex justify-end">
+                <button onclick="closeSyncModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium">
+                    Bezárás
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Add / Edit Custom Model -->
+    <div id="addModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+                <h2 class="text-lg font-bold text-white">+ Új Modell Hozzáadása a Katalógushoz</h2>
+                <button onclick="closeAddModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+            </div>
+
+            <form id="addModelForm" onsubmit="saveCustomModel(event)" class="space-y-3.5 text-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Modell neve *</label>
+                        <input type="text" id="newModelName" required placeholder="pl. Gemini 2.5 Ultra" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Szolgáltató *</label>
+                        <select id="newModelProvider" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
+                            <option value="Google Gemini">Google Gemini</option>
+                            <option value="OpenAI">OpenAI</option>
+                            <option value="Anthropic">Anthropic</option>
+                            <option value="Mistral AI">Mistral AI</option>
+                            <option value="DeepSeek">DeepSeek</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Kontextusablak</label>
+                        <input type="text" id="newModelContext" value="128K token" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Energia / Költség szint</label>
+                        <select id="newModelEnergy" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
+                            <option value="LOW">Alacsony / Gyors</option>
+                            <option value="MEDIUM" selected>Kiegyensúlyozott</option>
+                            <option value="HIGH">Magas / Deep Reasoning</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Licenc típusa</label>
+                        <select id="newModelOpen" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
+                            <option value="false">Zárt (API)</option>
+                            <option value="true">Open-Weight (Nyílt)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Részletes leírás (2-3 mondat, mire a legjobb) *</label>
+                    <textarea id="newModelDesc" required rows="3" placeholder="Milyen architektúrára épül, miben erős..." class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none focus:border-indigo-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Kulcsszavak (vesszővel elválasztva) *</label>
+                    <input type="text" id="newModelKeywords" required placeholder="kódolás, gyors, multimodális, ügynök" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Kategóriák (válassz legalább egyet)</label>
+                    <div class="grid grid-cols-2 gap-1.5 text-xs bg-slate-800/60 p-2.5 rounded-xl border border-slate-700" id="newModelCategoriesList">
+                        <label class="flex items-center gap-1.5"><input type="checkbox" value="Programozás & DevOps" checked> Programozás & DevOps</label>
+                        <label class="flex items-center gap-1.5"><input type="checkbox" value="Mély Érvelés & Matematika"> Mély Érvelés & Matematika</label>
+                        <label class="flex items-center gap-1.5"><input type="checkbox" value="Hatalmas Kontextus & RAG"> Hatalmas Kontextus & RAG</label>
+                        <label class="flex items-center gap-1.5"><input type="checkbox" value="Kreatív Írás & Kommunikáció"> Kreatív Írás & Kommunikáció</label>
+                        <label class="flex items-center gap-1.5"><input type="checkbox" value="Gyors & Energiatakarékos"> Gyors & Energiatakarékos</label>
+                        <label class="flex items-center gap-1.5"><input type="checkbox" value="Nyílt Súlyozású / Helyi"> Nyílt Súlyozású / Helyi</label>
+                        <label class="flex items-center gap-1.5"><input type="checkbox" value="Multimodális & Látás"> Multimodális & Látás</label>
+                    </div>
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2">
+                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300">Mégse</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">Mentés a katalógusba</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Side-by-Side Comparison -->
+    <div id="compareModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-5xl w-full p-6 shadow-2xl max-h-[88vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
+                <h2 class="text-xl font-bold text-white">⚖️ Modellek Közvetlen Összehasonlítása</h2>
+                <button onclick="closeCompareModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+            </div>
+            <div id="compareTableContainer" class="overflow-x-auto"></div>
+        </div>
+    </div>
+
+    <footer class="py-6 text-center text-xs text-slate-500 border-t border-slate-800/80 mt-12 bg-slate-950">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span>&copy; 2026 AI Modell Előválasztó & Energiahatékony Auto-Router Mátrix.</span>
+            <span>Szolgáltatók: Google Gemini • OpenAI • Anthropic Claude • Mistral AI • DeepSeek</span>
+        </div>
+    </footer>
+
+    <script>
+        // ============================================================================
+        // 1. TELJES, FRISSÍTETT MODELL KATALÓGUS (5 SZOLGÁLTATÓ, 22 MODELL)
+        // ============================================================================
+        const defaultModels = [
+            // --- GOOGLE GEMINI ÖKOSZISZTÉMA ---
+            {
+                id: "gemini-2.5-pro",
+                name: "Gemini 2.5 Pro",
+                provider: "Google Gemini",
+                versionBadge: "Zászlóshajó (Thinking)",
+                contextWindow: "1M - 2M token",
+                energyTier: "HIGH",
+                energyLabel: "Magas számítási igény / Deep Thinking",
+                openWeight: false,
+                description: "A Google legfejlettebb, beépített gondolkodási (thinking) folyamattal rendelkező multimodális csúcsmodellje. Kiemelkedő komplex rendszertervezésben, teljes kódbázisok átlátásában és hatalmas mennyiségű szöveges, képi, hang- vagy videóadat egyidejű szintetizálásában. Akkor válaszd, ha a feladat egyszerre igényel mély logikai következtetést és óriási kontextust.",
+                keywords: ["natív érvelés", "multimodális csúcs", "kódbázis-elemzés", "1M+ kontextus", "komplex architektúra"],
+                categories: ["Mély Érvelés & Matematika", "Programozás & DevOps", "Hatalmas Kontextus & RAG", "Multimodális & Látás"],
+                strengths: { coding: 96, reasoning: 97, creative: 92, context: 100, efficiency: 65, local: 0 }
+            },
+            {
+                id: "gemini-2.5-flash",
+                name: "Gemini 2.5 Flash",
+                provider: "Google Gemini",
+                versionBadge: "Arany középút",
+                contextWindow: "1M token",
+                energyTier: "LOW",
+                energyLabel: "Alacsony energiaigény / Villámgyors",
+                openWeight: false,
+                description: "A legjobb ár-érték és energiahatékonysági arányú munkásló modell, amely megtartja az 1 millió tokenes kontextusablakot és a hibrid gondolkodási képességet. Alacsony késleltetése miatt ideális nagy forgalmú napi asszisztenciához, dokumentum-feldolgozáshoz (RAG) és ágens-munkafolyamatokhoz. A legtöbb általános fejlesztői és elemzői feladatra felesleges ennél nagyobb modellt használni.",
+                keywords: ["energiahatékony", "1M kontextus", "alacsony késleltetés", "RAG munkásló", "költségoptimalizált"],
+                categories: ["Gyors & Energiatakarékos", "Hatalmas Kontextus & RAG", "Programozás & DevOps", "Multimodális & Látás"],
+                strengths: { coding: 88, reasoning: 86, creative: 84, context: 98, efficiency: 95, local: 0 }
+            },
+            {
+                id: "gemini-2.5-flash-lite",
+                name: "Gemini 2.5 Flash-Lite",
+                provider: "Google Gemini",
+                versionBadge: "Ultra-Zöld / Mikro",
+                contextWindow: "1M token",
+                energyTier: "LOW",
+                energyLabel: "Minimális lábnyom / Tömeges API",
+                openWeight: false,
+                description: "Kifejezetten nagy volumenű, alacsony számítási igényű feladatokra (szövegkategorizálás, kulcsszókinyerés, gyors fordítás, egyszerű címkézés) hangolt ultrakönnyű modell. Töredék energiát és tokendíjat fogyaszt a nagy modellekhez képest, miközben másodpercenként több száz kérést képes kiszolgálni.",
+                keywords: ["tömeges feldolgozás", "mikro-költség", "osztályozás", "zöld AI", "azonnali válasz"],
+                categories: ["Gyors & Energiatakarékos", "Hatalmas Kontextus & RAG"],
+                strengths: { coding: 74, reasoning: 72, creative: 75, context: 92, efficiency: 100, local: 0 }
+            },
+            {
+                id: "gemini-1.5-pro",
+                name: "Gemini 1.5 Pro (2M)",
+                provider: "Google Gemini",
+                versionBadge: "Hosszú Kontextus Спеc.",
+                contextWindow: "2M token",
+                energyTier: "MEDIUM",
+                energyLabel: "Közepes / Nagy memóriájú",
+                openWeight: false,
+                description: "Stabil, 2 millió tokenes kontextusablakával egyszerre képes befogadni több órányi videófelvételt, több ezer oldalas PDF dokumentációt vagy egy teljes vállalati adattárat finomhangolás nélkül. Kiváló tű-a-szénakazalban (needle-in-a-haystack) visszakeresési pontossággal rendelkezik.",
+                keywords: ["2M token", "videóelemzés", "könyvtár-kutatás", "dokumentum-bányászat", "multimodális"],
+                categories: ["Hatalmas Kontextus & RAG", "Multimodális & Látás", "Kreatív Írás & Kommunikáció"],
+                strengths: { coding: 86, reasoning: 85, creative: 86, context: 100, efficiency: 78, local: 0 }
+            },
+            {
+                id: "gemma-3-27b",
+                name: "Gemma 3 (27B / 12B)",
+                provider: "Google Gemini",
+                versionBadge: "Open-Weight",
+                contextWindow: "128K token",
+                energyTier: "LOW",
+                energyLabel: "Helyi GPU-n futtatható / Zöld",
+                openWeight: true,
+                description: "A Gemini kutatásokból leszármaztatott, nyílt súlyozású (open-weight) modellcsalád, amely akár egyetlen erősebb saját munkaállomáson vagy helyi szerveren is futtatható. Kiváló választás szigorú adatvédelmi (on-premise) követelményekhez, önkormányzati vagy civil projektekhez, ahol az adatok nem hagyhatják el a saját infrastruktúrát.",
+                keywords: ["nyílt súlyozású", "on-premise", "adatvédelem", "egy-GPU-s", "finomhangolható"],
+                categories: ["Nyílt Súlyozású / Helyi", "Gyors & Energiatakarékos", "Kreatív Írás & Kommunikáció"],
+                strengths: { coding: 82, reasoning: 80, creative: 81, context: 75, efficiency: 94, local: 98 }
+            },
+
+            // --- OPENAI (CHATGPT) ÖKOSZISZTÉMA ---
+            {
+                id: "gpt-4o",
+                name: "GPT-4o (Omni)",
+                provider: "OpenAI",
+                versionBadge: "Univerzális Standard",
+                contextWindow: "128K token",
+                energyTier: "MEDIUM",
+                energyLabel: "Kiegyensúlyozott / Multimodális",
+                openWeight: false,
+                description: "Az OpenAI leguniverzálisabb mindenes modellje, amely natívan kezeli a szöveget, a képeket és a valós idejű hangot. Kiváló egyensúlyt nyújt a napi irodai munkában, táblázatelemzésben, kreatív szövegírásban és általános kódolásban. Ha egyetlen általános, megbízható felhős asszisztenst keresel, ez az iparági alapvonal.",
+                keywords: ["univerzális", "valós idejű hang", "képelemzés", "irodai asszisztens", "kiegyensúlyozott"],
+                categories: ["Kreatív Írás & Kommunikáció", "Multimodális & Látás", "Programozás & DevOps"],
+                strengths: { coding: 90, reasoning: 88, creative: 91, context: 80, efficiency: 80, local: 0 }
+            },
+            {
+                id: "gpt-4o-mini",
+                name: "GPT-4o mini",
+                provider: "OpenAI",
+                versionBadge: "Kompakt & Olcsó",
+                contextWindow: "128K token",
+                energyTier: "LOW",
+                energyLabel: "Alacsony energiaigény / Gyors",
+                openWeight: false,
+                description: "A régi GPT-3.5-öt nagyságrendekkel felülmúló, rendkívül olcsó és gyors kompakt modell. Kifejezetten ajánlott ügyfélszolgálati chatbotokhoz (pl. Chatwoot integráció), automatizált űrlap-feldolgozáshoz és olyan API-hívásokhoz, ahol a gyors válaszidő és az alacsony tokenköltség elsődleges.",
+                keywords: ["költséghatékony", "chatbot", "gyors API", "alacsony fogyasztás", "mindennapi feladatok"],
+                categories: ["Gyors & Energiatakarékos", "Kreatív Írás & Kommunikáció"],
+                strengths: { coding: 82, reasoning: 79, creative: 82, context: 80, efficiency: 96, local: 0 }
+            },
+            {
+                id: "openai-o3-mini",
+                name: "OpenAI o3-mini / o1",
+                provider: "OpenAI",
+                versionBadge: "STEM & Érvelő",
+                contextWindow: "200K token",
+                energyTier: "HIGH",
+                energyLabel: "Magasabb tokenigény / Láncolt gondolkodás",
+                openWeight: false,
+                description: "Speciális, megerősítéses tanulással (Chain-of-Thought) képzett érvelő modellcsalád, amely a válaszadás előtt belső gondolatmenetet épít fel és ellenőrzi önmagát. Kiemelkedő algoritmikus programozásban, matematikai bizonyításokban, kvantitatív elemzésben és komplex fizikai/mérnöki szimulációk megtervezésében.",
+                keywords: ["matematika", "algoritmusok", "lánc-gondolkodás", "STEM", "komplex logika"],
+                categories: ["Mély Érvelés & Matematika", "Programozás & DevOps"],
+                strengths: { coding: 95, reasoning: 98, creative: 78, context: 85, efficiency: 68, local: 0 }
+            },
+            {
+                id: "gpt-4.5-preview",
+                name: "GPT-4.5 (Orion)",
+                provider: "OpenAI",
+                versionBadge: "Magas EQ & Stílus",
+                contextWindow: "128K token",
+                energyTier: "HIGH",
+                energyLabel: "Magas számítási igény / Óriásmodell",
+                openWeight: false,
+                description: "Az OpenAI legnagyobb, nem-láncgondolkodású alapmodellje, amely a világismeretre, az érzelmi intelligenciára (EQ), az árnyalt kommunikációra és az emberi intuícióra fókuszál. Kevesebb hallucinációval és sokkal természetesebb, empatikusabb stílussal dolgozik, így vezetői összefoglalókhoz, érzékeny kommunikációhoz és kreatív ötleteléshez kiváló.",
+                keywords: ["érzelmi intelligencia", "természetes stílus", "kreatív írás", "alacsony hallucináció", "kommunikáció"],
+                categories: ["Kreatív Írás & Kommunikáció"],
+                strengths: { coding: 89, reasoning: 88, creative: 98, context: 80, efficiency: 45, local: 0 }
+            },
+
+            // --- ANTHROPIC (CLAUDE) ÖKOSZISZTÉMA ---
+            {
+                id: "claude-3-7-sonnet",
+                name: "Claude 3.7 Sonnet",
+                provider: "Anthropic",
+                versionBadge: "Hibrid Érvelő + Kód",
+                contextWindow: "200K token",
+                energyTier: "MEDIUM",
+                energyLabel: "Szabályozható (Normál / Extended Thinking)",
+                openWeight: false,
+                description: "A világ első valódi hibrid érvelő modellje, amelynél kapcsolható az azonnali válaszadás és a kiterjesztett, lépésről lépésre történő gondolkodás (Extended Thinking). Jelenleg az egyik legerősebb modell full-stack szoftverfejlesztésben, komplex refaktorálásban, UI/UX generálásban és önállóan dolgozó kódoló ágensek (Claude Code) vezérlésében.",
+                keywords: ["hibrid érvelés", "full-stack kódolás", "refaktorálás", "ágens-vezérlés", "UI generálás"],
+                categories: ["Programozás & DevOps", "Mély Érvelés & Matematika", "Kreatív Írás & Kommunikáció"],
+                strengths: { coding: 99, reasoning: 95, creative: 95, context: 88, efficiency: 78, local: 0 }
+            },
+            {
+                id: "claude-3-5-sonnet",
+                name: "Claude 3.5 Sonnet (v2)",
+                provider: "Anthropic",
+                versionBadge: "Fejlesztői Kedvenc",
+                contextWindow: "200K token",
+                energyTier: "MEDIUM",
+                energyLabel: "Kiegyensúlyozott / Precíz",
+                openWeight: false,
+                description: "A fejlesztők és szövegírók körében etalonná vált modell: rendkívül pontosan követi a többlépcsős, szigorú formai utasításokat, és kerüli a mesterkélt AI-kliséket. Kiváló magyar és angol stílusérzékkel ír szakmai anyagokat, miközben a napi programozási feladatokban is gyors és megbízható.",
+                keywords: ["utasításkövetés", "klisémentes írás", "tiszta kód", "elemzés", "szakmai szöveg"],
+                categories: ["Programozás & DevOps", "Kreatív Írás & Kommunikáció"],
+                strengths: { coding: 95, reasoning: 91, creative: 96, context: 88, efficiency: 84, local: 0 }
+            },
+            {
+                id: "claude-3-5-haiku",
+                name: "Claude 3.5 Haiku",
+                provider: "Anthropic",
+                versionBadge: "Gyors & Takarékos",
+                contextWindow: "200K token",
+                energyTier: "LOW",
+                energyLabel: "Alacsony energiaigény / Gyors",
+                openWeight: false,
+                description: "Az Anthropic leggyorsabb és legköltséghatékonyabb modellje, amely a korábbi csúcsmodell (Claude 3 Opus) szintjét hozza kódolásban és szövegértésben, töredék energiafogyasztással. Ideális valós idejű kódkiegészítéshez, moderációhoz és interaktív felhasználói felületek háttérmotorjának.",
+                keywords: ["gyors kódolás", "alacsony késleltetés", "energiahatékony", "interaktív", "200K kontextus"],
+                categories: ["Gyors & Energiatakarékos", "Programozás & DevOps"],
+                strengths: { coding: 86, reasoning: 82, creative: 84, context: 88, efficiency: 94, local: 0 }
+            },
+            {
+                id: "claude-3-opus",
+                name: "Claude 3 Opus",
+                provider: "Anthropic",
+                versionBadge: "Mély Esszé & Filozófia",
+                contextWindow: "200K token",
+                energyTier: "HIGH",
+                energyLabel: "Magas számítási igény / Nehézsúlyú",
+                openWeight: false,
+                description: "Klasszikus nehézsúlyú modell, amelyet a különösen árnyalt bölcsészettudományi, filozófiai, pszichológiai és irodalmi elemzésekhez kedvelnek. Bár kódolásban a 3.5/3.7 Sonnet már megelőzte és olcsóbb is nála, mély fogalmi asszociációkban és esszéírásban továbbra is egyedi hangvételt képvisel.",
+                keywords: ["filozófia", "irodalmi stílus", "mély szintézis", "árnyalt elemzés"],
+                categories: ["Kreatív Írás & Kommunikáció"],
+                strengths: { coding: 84, reasoning: 88, creative: 97, context: 88, efficiency: 45, local: 0 }
+            },
+
+            // --- MISTRAL AI (EURÓPAI) ÖKOSZISZTÉMA ---
+            {
+                id: "mistral-large-2",
+                name: "Mistral Large 2",
+                provider: "Mistral AI",
+                versionBadge: "Európai Zászlóshajó",
+                contextWindow: "128K token",
+                energyTier: "MEDIUM",
+                energyLabel: "Kiegyensúlyozott / Tömör",
+                openWeight: true,
+                description: "A francia Mistral AI 123 milliárd paraméteres csúcsmodellje, amely kiemelkedő többnyelvű (köztük kiváló európai és magyar) nyelvi képességekkel, precíz függvényhívással (function calling) és erős logikával bír. Kutatási célra nyílt súlyozással is elérhető, és kerüli a feleslegesen bőbeszédű válaszokat.",
+                keywords: ["európai szuverenitás", "többnyelvű", "function calling", "tömör válaszok", "123B"],
+                categories: ["Kreatív Írás & Kommunikáció", "Programozás & DevOps", "Nyílt Súlyozású / Helyi"],
+                strengths: { coding: 89, reasoning: 88, creative: 88, context: 80, efficiency: 83, local: 80 }
+            },
+            {
+                id: "codestral-2501",
+                name: "Codestral (25.01)",
+                provider: "Mistral AI",
+                versionBadge: "Kód Спеcialista",
+                contextWindow: "256K token",
+                energyTier: "LOW",
+                energyLabel: "Alacsony késleltetés / IDE-motor",
+                openWeight: true,
+                description: "Kifejezetten több mint 80 programozási nyelvre (Python, JS/TS, Rust, SQL, Bash, Docker) optimalizált, könnyűsúlyú kóigeneráló modell. Fill-in-the-middle (kódkiegészítő) sebessége és 256K kontextusa miatt tökéletes választás VS Code / JetBrains bővítményekbe és helyi fejlesztői környezetekbe.",
+                keywords: ["80+ programnyelv", "IDE kódkiegészítés", "256K kontextus", "villámgyors kód", "DevOps"],
+                categories: ["Programozás & DevOps", "Gyors & Energiatakarékos", "Nyílt Súlyozású / Helyi"],
+                strengths: { coding: 93, reasoning: 83, creative: 70, context: 90, efficiency: 94, local: 88 }
+            },
+            {
+                id: "pixtral-large",
+                name: "Pixtral Large (124B)",
+                provider: "Mistral AI",
+                versionBadge: "Dokumentum & Látás",
+                contextWindow: "128K token",
+                energyTier: "MEDIUM",
+                energyLabel: "Kiegyensúlyozott / Multimodális",
+                openWeight: true,
+                description: "A Mistral Large 2-re épülő, 124 milliárd paraméteres nyílt súlyozású multimodális modell. Kiemelkedő teljesítményt nyújt bonyolult grafikonok, műszaki rajzok, számlák, szkennelt PDF-ek (OCR) és felhasználói felületek vizuális értelmezésében.",
+                keywords: ["OCR és dokumentumok", "műszaki ábrák", "multimodális", "nyílt súlyozású", "grafikon-elemzés"],
+                categories: ["Multimodális & Látás", "Nyílt Súlyozású / Helyi"],
+                strengths: { coding: 85, reasoning: 86, creative: 82, context: 80, efficiency: 80, local: 78 }
+            },
+            {
+                id: "ministral-8b",
+                name: "Ministral 8B / Mistral Small 3",
+                provider: "Mistral AI",
+                versionBadge: "Edge & Zöld Bajnok",
+                contextWindow: "128K token",
+                energyTier: "LOW",
+                energyLabel: "Minimális energia / Laptopon is fut",
+                openWeight: true,
+                description: "Kompakt, alacsony erőforrás-igényű modellpáros (8B–24B), amelyet helyi (edge) futtatásra, lokális Docker/Ollama konténerekbe és alacsony késleltetésű adatfeldolgozásra terveztek. Ideális választás, ha felhőfüggetlen, zöld és gyors nyelvi motort szeretnél saját hardveren üzemeltetni.",
+                keywords: ["Ollama / Docker", "edge AI", "alacsony memóriaigény", "saját szerver", "zöld futtatás"],
+                categories: ["Nyílt Súlyozású / Helyi", "Gyors & Energiatakarékos"],
+                strengths: { coding: 80, reasoning: 78, creative: 79, context: 80, efficiency: 98, local: 100 }
+            },
+
+            // --- DEEPSEEK ÖKOSZISZTÉMA ---
+            {
+                id: "deepseek-v3",
+                name: "DeepSeek-V3 (671B MoE)",
+                provider: "DeepSeek",
+                versionBadge: "MoE Ár-Érték Bajnok",
+                contextWindow: "128K token",
+                energyTier: "MEDIUM",
+                energyLabel: "Rendkívül hatékony MoE (37B aktív)",
+                openWeight: true,
+                description: "671 milliárd összparaméterű, de tokenenként csak 37 milliárd paramétert aktiváló Mixture-of-Experts (MoE) architektúra. Nyílt súlyozása és drasztikusan alacsony API-költsége mellett felveszi a versenyt a GPT-4o és a Claude 3.5 Sonnet képességeivel kódolásban, matematikában és általános szövegalkotásban.",
+                keywords: ["Mixture-of-Experts", "filléres API", "nyílt súlyozású", "kódolás", "általános csúcs"],
+                categories: ["Programozás & DevOps", "Gyors & Energiatakarékos", "Nyílt Súlyozású / Helyi", "Kreatív Írás & Kommunikáció"],
+                strengths: { coding: 94, reasoning: 91, creative: 88, context: 80, efficiency: 93, local: 82 }
+            },
+            {
+                id: "deepseek-r1",
+                name: "DeepSeek-R1",
+                provider: "DeepSeek",
+                versionBadge: "Open-Weight Reasoning",
+                contextWindow: "128K token",
+                energyTier: "HIGH",
+                energyLabel: "Magasabb tokenigény / Mély érvelés",
+                openWeight: true,
+                description: "Teljesen nyílt (MIT licencű) mélyérvelő modell, amely transzparensen megmutatja a belső gondolatmenetét (<think> blokk) és az OpenAI o1 szintjén teljesít matematikában, logikai feladványokban és komplex szoftverarchitektúrák tervezésében. Költsége a nyugati érvelő modellek töredéke.",
+                keywords: ["MIT nyílt licenc", "transzparens gondolatmenet", "matematikai bizonyítás", "mély logika", "olcsó érvelés"],
+                categories: ["Mély Érvelés & Matematika", "Programozás & DevOps", "Nyílt Súlyozású / Helyi"],
+                strengths: { coding: 96, reasoning: 98, creative: 85, context: 80, efficiency: 78, local: 85 }
+            },
+            {
+                id: "deepseek-r1-distill-32b",
+                name: "DeepSeek-R1-Distill (32B / 14B)",
+                provider: "DeepSeek",
+                versionBadge: "Helyi Érvelő",
+                contextWindow: "128K token",
+                energyTier: "LOW",
+                energyLabel: "Helyi szerveren futtatható érvelő",
+                openWeight: true,
+                description: "A nagy DeepSeek-R1 tudásával lepárolt (desztillált), Qwen és Llama alapú kompakt modellcsalád. Lehetővé teszi, hogy saját Mac Studio vagy helyi GPU-szerver környezetben, teljes adatvédelem mellett futtass magas szintű matematikai és kódolási érvelő modellt.",
+                keywords: ["desztillált érvelő", "helyi Mac / GPU", "on-premise logika", "nyílt forráskód", "alacsony költség"],
+                categories: ["Nyílt Súlyozású / Helyi", "Mély Érvelés & Matematika", "Gyors & Energiatakarékos", "Programozás & DevOps"],
+                strengths: { coding: 90, reasoning: 92, creative: 78, context: 80, efficiency: 95, local: 100 }
+            }
+        ];
+
+        const providers = ["Minden szolgáltató", "Google Gemini", "OpenAI", "Anthropic", "Mistral AI", "DeepSeek"];
+        const categories = [
+            "Minden feladat",
+            "Programozás & DevOps",
+            "Mély Érvelés & Matematika",
+            "Hatalmas Kontextus & RAG",
+            "Kreatív Írás & Kommunikáció",
+            "Gyors & Energiatakarékos",
+            "Nyílt Súlyozású / Helyi",
+            "Multimodális & Látás"
+        ];
+
+        // --- ÁLLAPOT ---
+        let catalog = [];
+        let activeProvider = "Minden szolgáltató";
+        let activeCategory = "Minden feladat";
+        let compareSelection = [];
+
+        // --- INICIALIZÁLÁS & LOCALSTORAGE ---
+        function loadCatalog() {
+            const saved = localStorage.getItem("ai_selector_catalog_v2");
+            if (saved) {
+                try {
+                    catalog = JSON.parse(saved);
+                } catch (e) {
+                    catalog = [...defaultModels];
+                }
+            } else {
+                catalog = [...defaultModels];
+            }
+            updateCounters();
+        }
+
+        function saveCatalog() {
+            localStorage.setItem("ai_selector_catalog_v2", JSON.stringify(catalog));
+            updateCounters();
+        }
+
+        function updateCounters() {
+            document.getElementById("modelCountBadge").textContent = `${catalog.length} modell`;
+            document.getElementById("totalCount").textContent = catalog.length;
+        }
+
+        function normalizeText(text) {
+            return (text || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+
+        // Szolgáltatóhoz tartozó színséma
+        function getProviderStyle(provider) {
+            switch (provider) {
+                case "Google Gemini":
+                    return { badge: "bg-blue-500/15 text-blue-300 border-blue-500/30", border: "hover:border-blue-500/50", dot: "bg-blue-400" };
+                case "OpenAI":
+                    return { badge: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30", border: "hover:border-emerald-500/50", dot: "bg-emerald-400" };
+                case "Anthropic":
+                    return { badge: "bg-amber-500/15 text-amber-300 border-amber-500/30", border: "hover:border-amber-500/50", dot: "bg-amber-400" };
+                case "Mistral AI":
+                    return { badge: "bg-rose-500/15 text-rose-300 border-rose-500/30", border: "hover:border-rose-500/50", dot: "bg-rose-400" };
+                case "DeepSeek":
+                    return { badge: "bg-purple-500/15 text-purple-300 border-purple-500/30", border: "hover:border-purple-500/50", dot: "bg-purple-400" };
+                default:
+                    return { badge: "bg-slate-700 text-slate-300 border-slate-600", border: "hover:border-indigo-500/50", dot: "bg-indigo-400" };
+            }
+        }
+
+        function getEnergyBadge(tier, label) {
+            if (tier === "LOW") {
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">🌱 ${label}</span>`;
+            } else if (tier === "MEDIUM") {
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-medium bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">⚖️ ${label}</span>`;
+            } else {
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">🔥 ${label}</span>`;
+            }
+        }
+
+        // ============================================================================
+        // 2. SZŰRŐK ÉS MODELL RÁCS RENDERELÉSE
+        // ============================================================================
+        function renderProviderFilters() {
+            const container = document.getElementById("providerFilterContainer");
+            container.innerHTML = "";
+            providers.forEach(p => {
+                const active = activeProvider === p;
+                const count = p === "Minden szolgáltató" ? catalog.length : catalog.filter(m => m.provider === p).length;
+                const btn = document.createElement("button");
+                btn.className = `px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 border ${
+                    active
+                        ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20"
+                        : "bg-slate-800/80 text-slate-300 border-slate-700/80 hover:bg-slate-800 hover:text-white"
+                }`;
+                btn.innerHTML = `<span>${p}</span><span class="px-1.5 py-0.2 rounded-full text-[11px] ${active ? 'bg-indigo-800 text-indigo-100' : 'bg-slate-700 text-slate-300'}">${count}</span>`;
+                btn.onclick = () => {
+                    activeProvider = p;
+                    renderProviderFilters();
+                    renderModels();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function renderCategoryFilters() {
+            const container = document.getElementById("categoryFilterContainer");
+            container.innerHTML = "";
+            categories.forEach(cat => {
+                const active = activeCategory === cat;
+                const btn = document.createElement("button");
+                btn.className = `px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                    active
+                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50 font-semibold"
+                        : "bg-slate-800/50 text-slate-400 border-slate-700/60 hover:text-slate-200 hover:bg-slate-800"
+                }`;
+                btn.textContent = cat;
+                btn.onclick = () => {
+                    activeCategory = cat;
+                    renderCategoryFilters();
+                    renderModels();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function applyFilters() {
+            renderModels();
+        }
+
+        function resetAllFilters() {
+            activeProvider = "Minden szolgáltató";
+            activeCategory = "Minden feladat";
+            document.getElementById("licenseFilter").value = "ALL";
+            document.getElementById("energyFilter").value = "ALL";
+            document.getElementById("taskPromptInput").value = "";
+            document.getElementById("clearPromptBtn").classList.add("hidden");
+            closeRecommendationPanel();
+            renderProviderFilters();
+            renderCategoryFilters();
+            renderModels();
+        }
+
+        function renderModels() {
+            const grid = document.getElementById("modelsGrid");
+            const noResults = document.getElementById("noResults");
+            const licenseVal = document.getElementById("licenseFilter").value;
+            const energyVal = document.getElementById("energyFilter").value;
+            const query = normalizeText(document.getElementById("taskPromptInput").value);
+
+            grid.innerHTML = "";
+            let visible = 0;
+
+            catalog.forEach(model => {
+                const matchProvider = activeProvider === "Minden szolgáltató" || model.provider === activeProvider;
+                const matchCat = activeCategory === "Minden feladat" || (model.categories && model.categories.includes(activeCategory));
+                const matchLicense = licenseVal === "ALL" || (licenseVal === "OPEN" && model.openWeight) || (licenseVal === "PROPRIETARY" && !model.openWeight);
+                const matchEnergy = energyVal === "ALL" || model.energyTier === energyVal;
+
+                // Szabad szöveges keresés, ha a felhasználó gépel
+                let matchQuery = true;
+                if (query.length > 1) {
+                    const haystack = normalizeText(`${model.name} ${model.provider} ${model.description} ${model.keywords.join(" ")} ${model.categories.join(" ")}`);
+                    // Ha több szavas összetett mondatot írt be, ne rejtsük el a kártyákat, mert arra ott az Auto-Router, csak ha rövid kulcsszóra keres
+                    if (query.split(" ").length <= 2) {
+                        matchQuery = haystack.includes(query);
+                    }
+                }
+
+                if (matchProvider && matchCat && matchLicense && matchEnergy && matchQuery) {
+                    visible++;
+                    const style = getProviderStyle(model.provider);
+                    const isSelectedForCompare = compareSelection.includes(model.id);
+
+                    const card = document.createElement("div");
+                    card.className = `model-card bg-slate-900/90 rounded-2xl p-6 border border-slate-800 ${style.border} flex flex-col justify-between shadow-lg relative`;
+
+                    card.innerHTML = `
+                        <div>
+                            <!-- Top Row: Provider + Compare Checkbox -->
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${style.badge}">
+                                    <span class="w-2 h-2 rounded-full ${style.dot}"></span>
+                                    ${model.provider}
+                                </span>
+                                <label class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white cursor-pointer select-none">
+                                    <input type="checkbox" ${isSelectedForCompare ? "checked" : ""} onchange="toggleCompare('${model.id}')" class="rounded bg-slate-800 border-slate-600 text-indigo-500 focus:ring-0">
+                                    <span>Összevetés</span>
+                                </label>
+                            </div>
+
+                            <!-- Title & Version Badge -->
+                            <div class="flex items-baseline justify-between gap-2 mb-2">
+                                <h3 class="text-xl font-bold text-white tracking-tight">${model.name}</h3>
+                                <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
+                                    ${model.versionBadge || "Aktív"}
+                                </span>
+                            </div>
+
+                            <!-- Specs Row: Context + Open/Closed + Energy -->
+                            <div class="flex flex-wrap items-center gap-1.5 mb-4">
+                                <span class="px-2 py-0.5 rounded-md text-xs font-mono bg-slate-800 text-slate-300 border border-slate-700">
+                                    📏 ${model.contextWindow}
+                                </span>
+                                <span class="px-2 py-0.5 rounded-md text-xs font-medium ${model.openWeight ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/30' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
+                                    ${model.openWeight ? '🔓 Nyílt súlyozású' : '🔒 Felhő API'}
+                                </span>
+                                ${getEnergyBadge(model.energyTier, model.energyLabel)}
+                            </div>
+
+                            <!-- Detailed 2-3 sentence Hungarian Description -->
+                            <p class="text-slate-300 text-sm leading-relaxed mb-5">
+                                ${model.description}
+                            </p>
+                        </div>
+
+                        <div>
+                            <!-- Categories -->
+                            <div class="flex flex-wrap gap-1.5 mb-3">
+                                ${(model.categories || []).map(c => `<span class="px-2 py-0.5 rounded text-[11px] bg-slate-800/90 text-slate-400">${c}</span>`).join("")}
+                            </div>
+
+                            <!-- Keywords -->
+                            <div class="pt-3 border-t border-slate-800/80 flex flex-wrap gap-1.5">
+                                ${(model.keywords || []).map(kw => `<span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">#${kw}</span>`).join("")}
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                }
+            });
+
+            document.getElementById("visibleCount").textContent = visible;
+            if (visible === 0) {
+                grid.classList.add("hidden");
+                noResults.classList.remove("hidden");
+            } else {
+                grid.classList.remove("hidden");
+                noResults.classList.add("hidden");
+            }
+        }
+
+        // ============================================================================
+        // 3. INTELLIGENS AUTO-ROUTER & FELADAT-ALAPÚ AJÁNLÓMOTOR
+        // ============================================================================
+        function setSamplePrompt(text) {
+            const input = document.getElementById("taskPromptInput");
+            input.value = text;
+            document.getElementById("clearPromptBtn").classList.remove("hidden");
+            runTaskRecommender();
+        }
+
+        function clearTaskPrompt() {
+            document.getElementById("taskPromptInput").value = "";
+            document.getElementById("clearPromptBtn").classList.add("hidden");
+            closeRecommendationPanel();
+            renderModels();
+        }
+
+        function closeRecommendationPanel() {
+            document.getElementById("recommendationPanel").classList.add("hidden");
+        }
+
+        function runTaskRecommender() {
+            const rawText = document.getElementById("taskPromptInput").value.trim();
+            if (!rawText) return;
+
+            const q = normalizeText(rawText);
+
+            // Feladat-profil detektálás kulcsszavak alapján
+            const needsCoding = /(kod|program|python|react|js|docker|script|api|sql|devops|hibakeres|refaktor|git|html|css)/.test(q);
+            const needsHugeContext = /(pdf|konyv|500|oldal|hosszu|vide|irat|rag|dokumentum|elemzes|osszesit|2m|kontextus)/.test(q);
+            const needsReasoning = /(matemat|bizonyit|logika|komplex|algoritmus|fizika|ervel|tudomany|szimulacio|kvantum|architektura)/.test(q);
+            const needsLocalOpen = /(sajat|helyi|szerver|open|nyilt|adatvedel|offline|ollama|lokalis|self-hosted|on-premise)/.test(q);
+            const needsLowEnergy = /(olcso|gyors|energia|zold|tomeges|kategorizal|chatbot|kis|mini|flash|költség|token)/.test(q);
+            const needsCreative = /(regeny|essze|szoveg|kreativ|stilus|kampany|magyar|fordit|cikk|level|kommunikacio)/.test(q);
+            const needsVision = /(kep|foto|grafikon|szamla|ocr|latas|abra|rajz)/.test(q);
+
+            // Pontozás minden modellre
+            const scored = catalog.map(m => {
+                let score = 50;
+                const s = m.strengths || { coding: 80, reasoning: 80, creative: 80, context: 80, efficiency: 80, local: 0 };
+                let reasons = [];
+
+                if (needsCoding) {
+                    score += s.coding * 0.6;
+                    if (s.coding >= 90) reasons.push("Kiemelkedő kódgenerálási és architektúra-építési pontosság");
+                }
+                if (needsHugeContext) {
+                    score += s.context * 0.7;
+                    if (s.context >= 95) reasons.push(`Óriási (${m.contextWindow}) kontextusablak a teljes dokumentum egyidejű befogadásához`);
+                }
+                if (needsReasoning) {
+                    score += s.reasoning * 0.65;
+                    if (s.reasoning >= 92) reasons.push("Dedikált láncolt gondolkodás (Chain-of-Thought) komplex problémákhoz");
+                }
+                if (needsLocalOpen) {
+                    score += m.openWeight ? 55 : -30;
+                    if (m.openWeight) reasons.push("Nyílt súlyozású (Open-Weight), saját infrastruktúrán is auditálható és futtatható");
+                }
+                if (needsLowEnergy) {
+                    score += s.efficiency * 0.6;
+                    if (m.energyTier === "LOW") reasons.push("Minimális energia- és tokenfogyasztás nagy sebesség mellett");
+                }
+                if (needsCreative) {
+                    score += s.creative * 0.6;
+                    if (s.creative >= 90) reasons.push("Árnyalt, természetes magyar nyelvű stílus és klisémentes fogalmazás");
+                }
+                if (needsVision && m.categories.includes("Multimodális & Látás")) {
+                    score += 35;
+                    reasons.push("Erős vizuális és dokumentum-alapú (OCR/ábra) elemzőképesség");
+                }
+
+                // Közvetlen kulcsszó-egyezés bónusz
+                const textBlob = normalizeText(`${m.name} ${m.description} ${m.keywords.join(" ")}`);
+                q.split(/\s+/).forEach(word => {
+                    if (word.length > 3 && textBlob.includes(word)) {
+                        score += 12;
+                    }
+                });
+
+                if (reasons.length === 0) {
+                    reasons.push("Sokoldalú, megbízható teljesítmény általános feladatokban");
+                }
+
+                return { model: m, score: Math.round(score), reason: reasons.slice(0, 2).join(" • ") };
+            });
+
+            scored.sort((a, b) => b.score - a.score);
+            const top3 = scored.slice(0, 3);
+
+            // Eco / Token-efficiency tipp generálása
+            let ecoTip = "";
+            if (needsReasoning && !needsLowEnergy) {
+                ecoTip = "<strong>Tudatos Token-tipp:</strong> Az érvelő modellek (mint az <em>o3-mini</em>, <em>DeepSeek-R1</em> vagy <em>Gemini 2.5 Pro</em>) belső gondolkodási tokeneket generálnak, ami 3-5x több energiát igényelhet. Ha csak a végső kód sablonjára van szükséged, próbáld ki először a <strong>Gemini 2.5 Flash</strong> vagy <strong>Codestral</strong> modellt!";
+            } else if (needsLowEnergy) {
+                ecoTip = "<strong>Zöld AI választás:</strong> Ehhez a feladathoz kiválóan megfelelnek a könnyűsúlyú modellek (<em>Flash, Haiku, 4o-mini, Ministral</em>), amelyek akár <strong>85-90%-kal kevesebb energiát</strong> fogyasztanak, mint a zászlóshajó modellek.";
+            } else {
+                ecoTip = "<strong>Auto-Router javaslat:</strong> Kezdd a munkát egy gyors, kiegyensúlyozott modellel (pl. <em>Gemini 2.5 Flash</em>, <em>DeepSeek-V3</em> vagy <em>Claude 3.5 Sonnet</em>), és csak a legbonyolultabb részfeladatoknál válts nehézsúlyú érvelő modellre.";
+            }
+
+            document.getElementById("ecoTipText").innerHTML = ecoTip;
+
+            const grid = document.getElementById("recommendedCardsGrid");
+            grid.innerHTML = top3.map((item, idx) => {
+                const m = item.model;
+                const medals = ["🥇 #1 Legjobb választás", "🥈 #2 Kiváló alternatíva", "🥉 #3 Költség/Helyi opció"];
+                return `
+                    <div class="bg-slate-900/95 border ${idx === 0 ? 'border-indigo-400 shadow-lg shadow-indigo-500/10' : 'border-slate-700'} rounded-xl p-4 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between text-xs font-bold mb-2">
+                                <span class="${idx === 0 ? 'text-indigo-300' : 'text-slate-400'}">${medals[idx]}</span>
+                                <span class="text-emerald-400 font-mono">${m.provider}</span>
+                            </div>
+                            <h4 class="text-lg font-extrabold text-white mb-1">${m.name}</h4>
+                            <div class="mb-2">${getEnergyBadge(m.energyTier, m.energyLabel)}</div>
+                            <p class="text-xs text-indigo-200/90 bg-indigo-950/50 border border-indigo-500/20 rounded-lg p-2.5 mb-2">
+                                <strong>Miért ajánljuk:</strong> ${item.reason}
+                            </p>
+                        </div>
+                        <div class="text-[11px] text-slate-400 flex items-center justify-between pt-2 border-t border-slate-800">
+                            <span>📏 ${m.contextWindow}</span>
+                            <span>${m.openWeight ? '🔓 Nyílt súlyozású' : '🔒 Felhő API'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            document.getElementById("recommendationPanel").classList.remove("hidden");
+        }
+
+        // Input eseménykezelő
+        document.getElementById("taskPromptInput").addEventListener("input", (e) => {
+            const val = e.target.value;
+            const clearBtn = document.getElementById("clearPromptBtn");
+            if (val.length > 0) {
+                clearBtn.classList.remove("hidden");
+            } else {
+                clearBtn.classList.add("hidden");
+                closeRecommendationPanel();
+            }
+            renderModels();
+        });
+
+        document.getElementById("taskPromptInput").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                runTaskRecommender();
+            }
+        });
+
+        // ============================================================================
+        // 4. ÉLŐ API SZINKRONIZÁLÁS (OPENROUTER NYILVÁNOS API)
+        // ============================================================================
+        function openSyncModal() {
+            document.getElementById("syncModal").classList.remove("hidden");
+        }
+        function closeSyncModal() {
+            document.getElementById("syncModal").classList.add("hidden");
+        }
+
+        async function fetchLiveOpenRouterModels() {
+            const statusText = document.getElementById("syncStatusText");
+            const container = document.getElementById("liveModelsContainer");
+            statusText.textContent = "Kapcsolódás az OpenRouter élő végponthoz...";
+            container.innerHTML = `<div class="p-4 text-center text-slate-400 animate-pulse">Modellek lekérdezése folyamatban...</div>`;
+
+            try {
+                const res = await fetch("https://openrouter.ai/api/v1/models");
+                if (!res.ok) throw new Error("API hiba");
+                const json = await res.json();
+                const allData = json.data || [];
+
+                // Szűrés az 5 fő gyártóra
+                const targetPrefixes = [
+                    { prefix: "google/", provider: "Google Gemini" },
+                    { prefix: "openai/", provider: "OpenAI" },
+                    { prefix: "anthropic/", provider: "Anthropic" },
+                    { prefix: "mistralai/", provider: "Mistral AI" },
+                    { prefix: "deepseek/", provider: "DeepSeek" }
+                ];
+
+                const matched = [];
+                allData.forEach(item => {
+                    const found = targetPrefixes.find(t => (item.id || "").startsWith(t.prefix));
+                    if (found) {
+                        matched.push({
+                            apiId: item.id,
+                            name: item.name || item.id,
+                            provider: found.provider,
+                            context: item.context_length ? `${Math.round(item.context_length / 1000)}K token` : "128K token",
+                            desc: item.description ? item.description.slice(0, 220) + "..." : "Élő OpenRouter API-ból szinkronizált modell."
+                        });
+                    }
+                });
+
+                const topLive = matched.slice(0, 25);
+                statusText.textContent = `Sikeres szinkronizálás! ${matched.length} élő modell található az 5 szolgáltatótól.`;
+
+                container.innerHTML = topLive.map((m, idx) => {
+                    const alreadyExists = catalog.some(existing => normalizeText(existing.name) === normalizeText(m.name));
+                    return `
+                        <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-between gap-3">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-white text-sm">${m.name}</span>
+                                    <span class="text-xs px-2 py-0.5 rounded bg-slate-700 text-indigo-300">${m.provider}</span>
+                                    <span class="text-xs font-mono text-slate-400">${m.context}</span>
+                                </div>
+                                <p class="text-xs text-slate-400 mt-1 line-clamp-1">${m.apiId}</p>
+                            </div>
+                            <button 
+                                onclick='importLiveModel(${JSON.stringify(m).replace(/'/g, "&apos;")}, this)' 
+                                ${alreadyExists ? "disabled" : ""}
+                                class="px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 ${alreadyExists ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 text-white'}">
+                                ${alreadyExists ? "Már a listában" : "+ Importálás"}
+                            </button>
+                        </div>
+                    `;
+                }).join("");
+
+            } catch (err) {
+                statusText.textContent = "Offline mód: Legfrissebb 2025/2026-os kiadások betöltése.";
+                const fallbackReleases = [
+                    { apiId: "google/gemini-2.5-pro-exp", name: "Gemini 2.5 Pro Experimental", provider: "Google Gemini", context: "2000K token" },
+                    { apiId: "openai/o3-high", name: "OpenAI o3 (Full Reasoning)", provider: "OpenAI", context: "200K token" },
+                    { apiId: "anthropic/claude-3.7-sonnet:thinking", name: "Claude 3.7 Sonnet (Extended Thinking)", provider: "Anthropic", context: "200K token" },
+                    { apiId: "mistralai/mistral-saba", name: "Mistral Saba (Regional Specialist)", provider: "Mistral AI", context: "32K token" },
+                    { apiId: "deepseek/deepseek-coder-v2", name: "DeepSeek-Coder-V2 (236B MoE)", provider: "DeepSeek", context: "128K token" }
+                ];
+                container.innerHTML = fallbackReleases.map(m => `
+                    <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-between gap-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-white text-sm">${m.name}</span>
+                                <span class="text-xs px-2 py-0.5 rounded bg-slate-700 text-indigo-300">${m.provider}</span>
+                                <span class="text-xs font-mono text-slate-400">${m.context}</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1">${m.apiId}</p>
+                        </div>
+                        <button onclick='importLiveModel(${JSON.stringify(m).replace(/'/g, "&apos;")}, this)' class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shrink-0">
+                            + Importálás
+                        </button>
+                    </div>
+                `).join("");
+            }
+        }
+
+        function importLiveModel(m, btnEl) {
+            const newEntry = {
+                id: "live-" + Date.now(),
+                name: m.name,
+                provider: m.provider,
+                versionBadge: "Élő API Import",
+                contextWindow: m.context,
+                energyTier: "MEDIUM",
+                energyLabel: "Szinkronizált modell",
+                openWeight: m.provider === "DeepSeek" || m.provider === "Mistral AI",
+                description: `${m.provider} legújabb szinkronizált modellje (${m.apiId}). Sokoldalú nyelvi, elemzői és kódolási feladatokra tervezve, a legfrissebb modell-regiszterből importálva.`,
+                keywords: ["új kiadás", "API szinkronizált", m.provider.toLowerCase()],
+                categories: ["Programozás & DevOps", "Kreatív Írás & Kommunikáció"],
+                strengths: { coding: 88, reasoning: 88, creative: 86, context: 85, efficiency: 85, local: 50 }
+            };
+            catalog.unshift(newEntry);
+            saveCatalog();
+            renderProviderFilters();
+            renderModels();
+            if (btnEl) {
+                btnEl.textContent = "Importálva ✓";
+                btnEl.disabled = true;
+                btnEl.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-700 text-emerald-100 shrink-0";
+            }
+        }
+
+        // ============================================================================
+        // 5. EGYÉNI MODELL HOZZÁADÁSA & ÖSSZEHASONLÍTÓ PANEL
+        // ============================================================================
+        function openAddModal() {
+            document.getElementById("addModal").classList.remove("hidden");
+        }
+        function closeAddModal() {
+            document.getElementById("addModal").classList.add("hidden");
+        }
+
+        function saveCustomModel(e) {
+            e.preventDefault();
+            const name = document.getElementById("newModelName").value.trim();
+            const provider = document.getElementById("newModelProvider").value;
+            const contextWindow = document.getElementById("newModelContext").value.trim();
+            const energyTier = document.getElementById("newModelEnergy").value;
+            const openWeight = document.getElementById("newModelOpen").value === "true";
+            const description = document.getElementById("newModelDesc").value.trim();
+            const keywords = document.getElementById("newModelKeywords").value.split(",").map(s => s.trim()).filter(Boolean);
+
+            const checkedCats = Array.from(document.querySelectorAll("#newModelCategoriesList input:checked")).map(cb => cb.value);
+
+            const energyLabels = {
+                LOW: "Alacsony energiaigény / Gyors",
+                MEDIUM: "Kiegyensúlyozott",
+                HIGH: "Magas számítási igény / Deep Reasoning"
+            };
+
+            const newModel = {
+                id: "custom-" + Date.now(),
+                name,
+                provider,
+                versionBadge: "Saját modell",
+                contextWindow,
+                energyTier,
+                energyLabel: energyLabels[energyTier],
+                openWeight,
+                description,
+                keywords: keywords.length ? keywords : ["egyéni", "új modell"],
+                categories: checkedCats.length ? checkedCats : ["Programozás & DevOps"],
+                strengths: { coding: 88, reasoning: 88, creative: 88, context: 85, efficiency: energyTier === "LOW" ? 95 : 80, local: openWeight ? 95 : 0 }
+            };
+
+            catalog.unshift(newModel);
+            saveCatalog();
+            renderProviderFilters();
+            renderModels();
+            closeAddModal();
+            document.getElementById("addModelForm").reset();
+        }
+
+        // Összehasonlító funkciók
+        function toggleCompare(modelId) {
+            const idx = compareSelection.indexOf(modelId);
+            if (idx > -1) {
+                compareSelection.splice(idx, 1);
+            } else {
+                if (compareSelection.length >= 3) {
+                    compareSelection.shift();
+                }
+                compareSelection.push(modelId);
+            }
+            updateCompareBar();
+            renderModels();
+        }
+
+        function clearComparison() {
+            compareSelection = [];
+            updateCompareBar();
+            renderModels();
+        }
+
+        function updateCompareBar() {
+            const bar = document.getElementById("compareBar");
+            const pills = document.getElementById("comparePills");
+            if (compareSelection.length === 0) {
+                bar.classList.add("hidden");
+                return;
+            }
+            bar.classList.remove("hidden");
+            pills.innerHTML = compareSelection.map(id => {
+                const m = catalog.find(x => x.id === id);
+                return m ? `<span class="px-3 py-1 rounded-xl text-xs font-semibold bg-indigo-500/20 text-indigo-200 border border-indigo-500/40">${m.name}</span>` : "";
+            }).join("");
+        }
+
+        function openCompareModal() {
+            const selectedModels = compareSelection.map(id => catalog.find(x => x.id === id)).filter(Boolean);
+            const container = document.getElementById("compareTableContainer");
+
+            container.innerHTML = `
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="border-b border-slate-800">
+                            <th class="py-3 px-4 text-slate-400 font-medium w-1/4">Szempont</th>
+                            ${selectedModels.map(m => `<th class="py-3 px-4 text-white font-bold text-base">${m.name} <div class="text-xs font-normal text-indigo-400">${m.provider}</div></th>`).join("")}
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/80">
+                        <tr>
+                            <td class="py-3 px-4 text-slate-400 font-medium">Kontextusablak</td>
+                            ${selectedModels.map(m => `<td class="py-3 px-4 font-mono text-slate-200">${m.contextWindow}</td>`).join("")}
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 text-slate-400 font-medium">Energia / Költség profil</td>
+                            ${selectedModels.map(m => `<td class="py-3 px-4">${getEnergyBadge(m.energyTier, m.energyLabel)}</td>`).join("")}
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 text-slate-400 font-medium">Licenc & Futtathatóság</td>
+                            ${selectedModels.map(m => `<td class="py-3 px-4 text-slate-200">${m.openWeight ? '🔓 Nyílt súlyozású (Saját szerveren is)' : '🔒 Zárt (Felhő API)'}</td>`).join("")}
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 text-slate-400 font-medium">Fő erősségek</td>
+                            ${selectedModels.map(m => `<td class="py-3 px-4 text-slate-300 text-xs leading-relaxed">${m.description}</td>`).join("")}
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 text-slate-400 font-medium">Kulcsszavak</td>
+                            ${selectedModels.map(m => `<td class="py-3 px-4"><div class="flex flex-wrap gap-1">${m.keywords.map(k => `<span class="px-2 py-0.5 rounded bg-slate-800 text-xs text-indigo-300">#${k}</span>`).join("")}</div></td>`).join("")}
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+            document.getElementById("compareModal").classList.remove("hidden");
+        }
+
+        function closeCompareModal() {
+            document.getElementById("compareModal").classList.add("hidden");
+        }
+
+        // Téma váltás
+        function toggleTheme() {
+            const html = document.documentElement;
+            const body = document.body;
+            if (html.classList.contains("dark")) {
+                html.classList.remove("dark");
+                body.classList.remove("bg-slate-950", "text-slate-100");
+                body.classList.add("bg-slate-900", "text-slate-100");
+            } else {
+                html.classList.add("dark");
+            }
+        }
+
+        // Indítás
+        loadCatalog();
+        renderProviderFilters();
+        renderCategoryFilters();
+        renderModels();
+    </script>
+</body>
+</html>
