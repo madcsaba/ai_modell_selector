@@ -14,27 +14,25 @@
 <style>
 /* Layout: egyoszlopos munkafelület – felül feladat → ajánlás, alatta rendezhető katalógus-táblázat. */
 :root {
-  --bg: #f5f6f8; --surface: #ffffff; --surface-2: #eef1f5; --line: #dde2ea; --line-strong: #c5ccd8;
-  --fg: #151b25; --muted: #5a6575; --accent: #2b57d0; --accent-fg: #ffffff; --accent-soft: #e5ecfb;
-  --good: #1d7347; --good-soft: #e3f3ea; --warn: #94580a; --warn-soft: #fbf0dc;
-  --p-anthropic: #b8693a; --p-openai: #2f8466; --p-google: #3567d6; --p-mistral: #c4413a; --p-deepseek: #6a55cf; --p-other: #7a8496;
-  --font-ui: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-  --r: 10px; --shadow: 0 1px 2px rgb(20 27 37 / .06), 0 8px 24px rgb(20 27 37 / .06);
+  --bg: #f2f5f5; --surface: #ffffff; --surface-2: #e7eeef; --line: #d4dfe0; --line-strong: #b7c7c9;
+  --fg: #11201f; --muted: #4c605f; --accent: #0a6b78; --accent-fg: #ffffff; --accent-soft: #d8eef0;
+  --hl: #b0540b; --hl-soft: #fbe9d4; --band: #0b3940; --band-fg: #e8f4f5; --band-muted: #9fc4c8;
+  --good: #2f7a3a; --good-soft: #e2f2e2; --warn: #94580a; --warn-soft: #fbf0dc; --bad: #b3261e; --bad-soft: #fbe6e4;
+  --p-anthropic: #b8693a; --p-openai: #2f8466; --p-google: #3567d6; --p-mistral: #c4413a; --p-deepseek: #6a55cf; --p-other: #7a8496; --font-ui: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif; --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace; --r: 10px; --shadow: 0 1px 2px rgb(20 27 37 / .06), 0 8px 24px rgb(20 27 37 / .06);
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0f1318; --surface: #161b22; --surface-2: #1d232d; --line: #2a313d; --line-strong: #3a4352;
-  --fg: #e6eaf1; --muted: #9aa5b5; --accent: #86a5f3; --accent-fg: #0f1318; --accent-soft: #1e2a45;
-  --good: #6fd19c; --good-soft: #17301f; --warn: #f0b562; --warn-soft: #33270f;
-  --p-anthropic: #e39a6c; --p-openai: #5fc09a; --p-google: #7ea4f5; --p-mistral: #f07d72; --p-deepseek: #a596f2; --p-other: #a3acbb;
-  --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25); color-scheme: dark;
+  --bg: #0c1416; --surface: #131d20; --surface-2: #1a272a; --line: #253538; --line-strong: #34484b;
+  --fg: #e2ecec; --muted: #94aaab; --accent: #56c3cf; --accent-fg: #0b1517; --accent-soft: #123840;
+  --hl: #f2a35a; --hl-soft: #3a2814; --band: #0d3036; --band-fg: #e2f0f1; --band-muted: #8db4b8;
+  --good: #79d18a; --good-soft: #16301b; --warn: #f0b562; --warn-soft: #33270f; --bad: #f2a29b; --bad-soft: #3a1c1a;
+  --p-anthropic: #e39a6c; --p-openai: #5fc09a; --p-google: #7ea4f5; --p-mistral: #f07d72; --p-deepseek: #a596f2; --p-other: #a3acbb; --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25); color-scheme: dark;
 } }
 :root[data-theme="dark"] {
-  --bg: #0f1318; --surface: #161b22; --surface-2: #1d232d; --line: #2a313d; --line-strong: #3a4352;
-  --fg: #e6eaf1; --muted: #9aa5b5; --accent: #86a5f3; --accent-fg: #0f1318; --accent-soft: #1e2a45;
-  --good: #6fd19c; --good-soft: #17301f; --warn: #f0b562; --warn-soft: #33270f;
-  --p-anthropic: #e39a6c; --p-openai: #5fc09a; --p-google: #7ea4f5; --p-mistral: #f07d72; --p-deepseek: #a596f2; --p-other: #a3acbb;
-  --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25); color-scheme: dark;
+  --bg: #0c1416; --surface: #131d20; --surface-2: #1a272a; --line: #253538; --line-strong: #34484b;
+  --fg: #e2ecec; --muted: #94aaab; --accent: #56c3cf; --accent-fg: #0b1517; --accent-soft: #123840;
+  --hl: #f2a35a; --hl-soft: #3a2814; --band: #0d3036; --band-fg: #e2f0f1; --band-muted: #8db4b8;
+  --good: #79d18a; --good-soft: #16301b; --warn: #f0b562; --warn-soft: #33270f; --bad: #f2a29b; --bad-soft: #3a1c1a;
+  --p-anthropic: #e39a6c; --p-openai: #5fc09a; --p-google: #7ea4f5; --p-mistral: #f07d72; --p-deepseek: #a596f2; --p-other: #a3acbb; --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25); color-scheme: dark;
 }
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--font-ui); -webkit-font-smoothing: antialiased; }
@@ -81,7 +79,7 @@ textarea#task { width: 100%; min-height: 76px; resize: vertical; border: 1px sol
 .chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--fg); font-weight: 600; }
 .chip .tick { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid currentColor; opacity: .5; display: inline-block; flex: none; }
 .chip[aria-pressed="true"] .tick { background: var(--accent); border-color: var(--accent); opacity: 1; box-shadow: inset 0 0 0 2px var(--surface); }
-.chip .auto { font-size: .68rem; color: var(--accent); font-weight: 600; letter-spacing: .03em; }
+.chip .auto { font-size: .68rem; color: var(--hl); font-weight: 600; letter-spacing: .03em; }
 .samples { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .85rem; }
 .samples button { background: none; border: 0; padding: 2px 0; color: var(--accent); cursor: pointer; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent); text-underline-offset: 3px; }
 .field { display: grid; gap: 6px; }
@@ -103,7 +101,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .pick.first { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), var(--shadow); }
 .pick-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .rank { font-size: .75rem; font-weight: 600; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
-.pick.first .rank { color: var(--accent); }
+.pick.first .rank { color: var(--hl); }
 .pick h3 { font-size: 1.15rem; font-weight: 700; }
 .pick h3 button { all: unset; cursor: pointer; }
 .pick h3 button:hover { text-decoration: underline; }
@@ -111,7 +109,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .why { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: .9rem; }
 .caveat { font-size: .82rem; color: var(--warn); background: var(--warn-soft); border-radius: 6px; padding: 6px 9px; }
 .pick-foot { display: flex; justify-content: space-between; gap: 8px; align-items: center; border-top: 1px solid var(--line); padding-top: 10px; font-size: .85rem; flex-wrap: wrap; }
-.cost-big { font-family: var(--font-mono); font-weight: 500; font-size: .95rem; }
+.cost-big { font-family: var(--font-mono); font-weight: 600; font-size: .95rem; color: var(--accent); }
 .empty { padding: 28px; text-align: center; display: grid; gap: 10px; justify-items: center; }
 
 /* Provider dot + badges */
@@ -149,7 +147,7 @@ tbody tr.dim { opacity: .55; }
 .bar > i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
 .pips { display: inline-flex; gap: 2px; vertical-align: middle; }
 .pips i { width: 7px; height: 7px; border-radius: 2px; background: var(--line-strong); }
-.pips i.on { background: var(--fg); }
+.pips i.on { background: var(--accent); }
 td .pips { margin-right: 8px; }
 .caps { display: grid; grid-template-columns: auto auto; gap: 1px 8px; font-size: .78rem; color: var(--muted); align-items: center; }
 td.cmp { width: 44px; }
@@ -175,7 +173,7 @@ dialog::backdrop { background: rgb(10 14 20 / .55); }
 .rating { display: grid; grid-template-columns: 120px 1fr 32px; gap: 10px; align-items: center; font-size: .9rem; }
 .cmp-table td, .cmp-table th { vertical-align: top; }
 .cmp-table th[scope="row"] { color: var(--muted); font-weight: 500; font-size: .85rem; position: static; white-space: normal; }
-.best { color: var(--good); font-weight: 600; }
+.best { color: var(--accent); font-weight: 700; }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
 .form-grid label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); }
 .form-grid input, .form-grid select { width: 100%; color: var(--fg); }
@@ -188,10 +186,23 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 0; }
 .note { font-size: .85rem; color: var(--muted); display: grid; gap: 6px; max-width: 75ch; }
 footer { border-top: 1px solid var(--line); padding-block: 20px 40px; }
 footer .wrap { display: grid; gap: 8px; font-size: .84rem; color: var(--muted); }
+/* Mémsarok */
+.memes { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.meme-card { padding: 14px; display: grid; gap: 12px; justify-items: center; background: var(--hl-soft); border-color: color-mix(in srgb, var(--hl) 30%, transparent); }
+.meme-card img { display: block; max-width: 100%; max-height: 460px; height: auto; border-radius: 8px; background: var(--surface); }
+.meme-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; flex-wrap: wrap; }
+.meme-foot p { font-size: .92rem; }
 .toast { position: fixed; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: .9rem; z-index: 50; box-shadow: var(--shadow); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (max-width: 640px) { .hide-sm { display: none; } th, td { padding: 9px 8px; } }
 @media (prefers-reduced-motion: no-preference) { .bar > i { transition: width .25s ease; } }
+
+/* Színes fejléc-sáv */
+header.top { background: var(--band); color: var(--band-fg); border-bottom: 0; }
+header.top .muted { color: var(--band-muted); }
+header.top .btn { background: transparent; color: var(--band-fg); border-color: color-mix(in srgb, var(--band-fg) 32%, transparent); }
+header.top .btn:hover { background: color-mix(in srgb, var(--band-fg) 12%, transparent); }
+header.top :focus-visible { outline-color: var(--band-fg); }
 </style>
 
 <header class="top">
@@ -293,6 +304,20 @@ footer .wrap { display: grid; gap: 8px; font-size: .84rem; color: var(--muted); 
       <p><span class="approx">≈</span> = a források eltértek vagy közelítő az adat; döntés előtt nézd meg a szolgáltató árlistáját (a modell adatlapján linkeljük).</p>
     </div>
   </section>
+  <!-- 4. Mémsarok: a képeket a repó memek/ mappájába töltheti fel a tulajdonos -->
+  <section aria-labelledby="memeTitle" id="memeSec" hidden>
+    <div class="results-head">
+      <h2 id="memeTitle">Mémsarok</h2>
+      <span class="small muted" id="memeMeta"></span>
+    </div>
+    <figure class="panel meme-card" style="margin:0">
+      <img id="memeImg" alt="" decoding="async">
+      <figcaption class="meme-foot">
+        <p id="memeCap"></p>
+        <button class="btn" type="button" id="memeNext">Másikat</button>
+      </figcaption>
+    </figure>
+  </section>
 </main>
 
 <footer>
@@ -351,6 +376,8 @@ footer .wrap { display: grid; gap: 8px; font-size: .84rem; color: var(--muted); 
 </dialog>
 <div class="toast" id="toast" role="status" hidden></div>
 
+<script src="memek/memek.js"></script>
+<script src="memek/fortepan.js"></script>
 <script>
 "use strict";
 /* ============================== ADATOK ==============================
@@ -800,6 +827,69 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "/" && !e.target.matches("input, textarea, select")) { e.preventDefault(); $("#q").focus(); }
 });
 
+/* ============================== MÉMSAROK ==============================
+   Két forrás: a saját mémek (memek/memek.js, GitHub Action generálja a memek/ mappa képeiből)
+   és a Fortepan "modell" keresés fotói (memek/fortepan.js, hetente frissül). Fele-fele arányban sorsolunk. */
+const OWN = (window.MEMEK && Array.isArray(window.MEMEK.kepek) ? window.MEMEK.kepek : []).filter((m) => m && m.fajl)
+  .map((m) => ({ src: "memek/" + encodeURIComponent(m.fajl), alt: m.felirat || "Modellválasztós mém", cap: m.felirat || "", key: "m:" + m.fajl }));
+const FP_GROUPS = (window.FORTEPAN && Array.isArray(window.FORTEPAN.keresesek) ? window.FORTEPAN.keresesek : [])
+  .map((g) => ({ nev: String(g.nev || ""), tipus: g.tipus, items: (Array.isArray(g.kepek) ? g.kepek : []).filter((f) => f && f.mid).map((f) => ({
+    src: `https://fortepan.download/file/fortepan-eu/1600/fortepan_${encodeURIComponent(f.mid)}.jpg`,
+    alt: f.leiras || "Archív fotó a Fortepan gyűjteményéből",
+    cap: "Modellválasztás, régi kiadás" + (f.ev ? ` (${f.ev})` : "") + (f.leiras ? `: ${f.leiras}` : ""),
+    credit: { text: `Fortepan / ${f.adomanyozo || "ismeretlen adományozó"}`, href: `https://fortepan.hu/hu/photos/?id=${encodeURIComponent(f.mid)}` },
+    tag: g.tipus === "cimke" ? `„${g.nev}” címke` : `„${g.nev}” keresés`,
+    key: "f:" + f.mid
+  })) })).filter((g) => g.items.length);
+// Forrás → (Fortepan esetén véletlen keresés/címke) → véletlen kép.
+const SOURCES = [];
+if (OWN.length) SOURCES.push([OWN]);
+if (FP_GROUPS.length) SOURCES.push(FP_GROUPS.map((g) => g.items));
+let memeCur = null;
+function pickMeme() {
+  let last = null; try { last = sessionStorage.getItem("modellvalaszto.meme"); } catch (e) {}
+  let m = null;
+  for (let i = 0; i < 8; i++) {
+    const src = SOURCES[Math.floor(Math.random() * SOURCES.length)];
+    const pool = src[Math.floor(Math.random() * src.length)];
+    m = pool[Math.floor(Math.random() * pool.length)];
+    if (m.key !== last && (!memeCur || m.key !== memeCur.key)) break;
+  }
+  return m;
+}
+function dropEmpty() {
+  for (const src of SOURCES) for (let i = src.length - 1; i >= 0; i--) if (!src[i].length) src.splice(i, 1);
+  for (let i = SOURCES.length - 1; i >= 0; i--) if (!SOURCES[i].length) SOURCES.splice(i, 1);
+}
+function showMeme() {
+  dropEmpty();
+  if (!SOURCES.length) { $("#memeSec").hidden = true; return; }
+  const m = memeCur = pickMeme();
+  try { sessionStorage.setItem("modellvalaszto.meme", m.key); } catch (e) {}
+  const img = $("#memeImg");
+  img.src = m.src; img.alt = m.alt;
+  const cap = $("#memeCap"); cap.textContent = m.cap;
+  if (m.credit) {
+    const a = document.createElement("a");
+    a.href = m.credit.href; a.target = "_blank"; a.rel = "noopener"; a.textContent = m.credit.text;
+    const c = document.createElement("span"); c.className = "small muted"; c.style.display = "block";
+    c.append(`${m.tag} · Fotó: `, a, " · CC BY-SA 3.0");
+    cap.append(c);
+  }
+  const parts = [];
+  if (OWN.length) parts.push(`${OWN.length} saját mém`);
+  const fpN = FP_GROUPS.reduce((n, g) => n + g.items.length, 0);
+  if (fpN) parts.push(`${fpN} Fortepan-fotó ${FP_GROUPS.length} keresésből`);
+  $("#memeMeta").textContent = parts.join(" + ") + " · minden betöltéskor másik";
+  $("#memeSec").hidden = false;
+}
+$("#memeNext").addEventListener("click", showMeme);
+$("#memeImg").addEventListener("error", () => {
+  // Nem elérhető kép (pl. a Fortepan-szerver ebben a nézetben tiltott): kivesszük, és sorsolunk újat.
+  for (const src of SOURCES) for (const pool of src) { const i = pool.indexOf(memeCur); if (i > -1) pool.splice(i, 1); }
+  showMeme();
+});
+
 /* ============================== INDULÁS ============================== */
 (function init() {
   const th = store.get("modellvalaszto.theme"); if (th === "dark" || th === "light") document.documentElement.dataset.theme = th;
@@ -808,7 +898,7 @@ document.addEventListener("keydown", (e) => {
   loadCustom();
   // Működő kiinduló állapot: egy példa-feladat már ki van töltve.
   $("#task").value = "Magyar nyelvű ügyfélszolgálati chatbot, napi több ezer kérdés, olcsón";
-  detectFromText(); prioText(); renderAll(); renderCmpBar();
+  detectFromText(); prioText(); renderAll(); renderCmpBar(); showMeme();
   // Billentyűzettel is megnyitható sorok
   new MutationObserver(() => document.querySelectorAll("#tbody tr[data-detail]").forEach((tr) => tr.tabIndex = 0)).observe($("#tbody"), { childList: true });
   document.querySelectorAll("#tbody tr[data-detail]").forEach((tr) => tr.tabIndex = 0);

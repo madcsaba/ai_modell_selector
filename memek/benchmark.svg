@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" font-family="Helvetica, Arial, sans-serif">
+  <rect width="1200" height="675" fill="#f2f5f5"/>
+  <text x="600" y="80" fill="#11201f" font-size="42" font-weight="800" text-anchor="middle">Ugyanaz a modell. Ugyanaz a benchmark.</text>
+  <!-- bal: magas oszlop -->
+  <text x="330" y="160" fill="#4c605f" font-size="26" text-anchor="middle">A labor blogposztja</text>
+  <rect x="230" y="190" width="200" height="330" rx="8" fill="#0a6b78"/>
+  <text x="330" y="250" fill="#ffffff" font-size="56" font-weight="800" text-anchor="middle">89</text>
+  <text x="330" y="560" fill="#11201f" font-size="24" text-anchor="middle">max effort, 5 óra időkorlát</text>
+  <!-- jobb: alacsony oszlop -->
+  <text x="870" y="160" fill="#4c605f" font-size="26" text-anchor="middle">Egy másik táblázat</text>
+  <rect x="770" y="450" width="200" height="70" rx="8" fill="#b0540b"/>
+  <text x="870" y="430" fill="#b0540b" font-size="56" font-weight="800" text-anchor="middle">19</text>
+  <text x="870" y="560" fill="#11201f" font-size="24" text-anchor="middle">„alapbeállítás”</text>
+  <line x1="120" y1="520" x2="1080" y2="520" stroke="#b7c7c9" stroke-width="3"/>
+  <rect x="0" y="600" width="1200" height="75" fill="#0b3940"/>
+  <text x="600" y="648" fill="#e8f4f5" font-size="30" font-weight="700" text-anchor="middle">Ezért nem rangsorolunk benchmarkokkal.</text>
+</svg>
