@@ -884,9 +884,17 @@ function showMeme() {
   $("#memeSec").hidden = false;
 }
 $("#memeNext").addEventListener("click", showMeme);
+let fpLoaded = false;
+$("#memeImg").addEventListener("load", () => { if (memeCur && memeCur.credit) fpLoaded = true; });
 $("#memeImg").addEventListener("error", () => {
-  // Nem elérhető kép (pl. a Fortepan-szerver ebben a nézetben tiltott): kivesszük, és sorsolunk újat.
-  for (const src of SOURCES) for (const pool of src) { const i = pool.indexOf(memeCur); if (i > -1) pool.splice(i, 1); }
+  // Nem elérhető kép. Ha még egy Fortepan-kép sem töltődött be, valószínűleg a képszerver tiltott ebben
+  // a nézetben: ilyenkor az egész Fortepan-forrást kihagyjuk, különben csak ezt az egy képet.
+  if (memeCur && memeCur.credit && !fpLoaded) {
+    const i = SOURCES.findIndex((src) => src.some((pool) => pool.includes(memeCur)));
+    if (i > -1) SOURCES.splice(i, 1);
+  } else {
+    for (const src of SOURCES) for (const pool of src) { const i = pool.indexOf(memeCur); if (i > -1) pool.splice(i, 1); }
+  }
   showMeme();
 });
 
