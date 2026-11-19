@@ -5,6 +5,7 @@ Független, magyar nyelvű segédoldal nagy nyelvi modellek kiválasztásához. 
 | Oldal | Mire jó |
 |---|---|
 | [`index.html`](index.html) | A feladat leírásából modellt ajánl. Havi költséget becsül, és 23 aktuális modellt hasonlít össze (Anthropic, OpenAI, Google, Mistral, DeepSeek). |
+| [`en.html`](en.html) | English version of the selector (*angol változat*), with a moss-and-rust palette. Same data and logic; the `BUILTIN` list must be updated in both files. |
 | [`memek/`](memek/) | A főoldal mémsarka: Fortepan-fotók a beállított keresések és címkék alapján (lásd [`memek/README.md`](memek/README.md)). |
 | [`opencode/`](opencode/) | Az [OpenCode](https://opencode.ai) kódoló ágensben választható modellek: Zen, Go és a teljes models.dev-katalógus, több mint 1 400 modell. |
 
