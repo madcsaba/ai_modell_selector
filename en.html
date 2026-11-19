@@ -213,6 +213,7 @@ header.top :focus-visible { outline-color: var(--band-fg); }
     </div>
     <div class="top-actions">
       <a class="btn" href="index.html" hreflang="hu" lang="hu" title="Magyar változat">Magyar</a>
+      <a class="btn" href="https://madcsaba.github.io/ai-awareness-wireframe/models.html" title="Energy &amp; eco guide">🌿 Energy &amp; eco</a>
       <a class="btn" href="opencode/" title="Hungarian only">OpenCode models (HU)</a>
       <button class="btn" id="openCustom" type="button">Your models</button>
       <button class="btn icon-btn" id="themeBtn" type="button" aria-label="Light or dark theme">◐</button>
@@ -324,7 +325,9 @@ header.top :focus-visible { outline-color: var(--band-fg); }
 <footer>
   <div class="wrap">
     <p><b>Method.</b> Fit is a weighted average of the editorial rating (1–5) for the selected needs and the monthly cost; the “What matters more?” slider sets the weight. Ratings are estimates to help you orient, not measurements. The writing rating was made for Hungarian text.</p>
-    <p>Providers do not publish energy use per request, so this page does not estimate energy. A smaller, cheaper model usually means less computation too, but that is not an exact measure. <a href="https://madcsaba.github.io/ai-awareness-wireframe/petition.html" target="_blank" rel="noopener">The petition for an AI energy label</a> asks the industry to close this gap.</p>
+    <p>Providers do not publish energy use per request, so the <b>⚡ kWh</b> figure is an editorial per-request estimate — not a measurement. A smaller, cheaper model usually means less computation too, but that is not an exact measure. A full energy breakdown and the HU/EN eco guide: <a href="https://madcsaba.github.io/ai-awareness-wireframe/models.html">🌿 “Which model should you use?”</a>.</p>
+    <p><b>Shared data.</b> This page and the 🌿 EcoAI guide load the same catalogue (<code>models-data.js</code>): a model update appears on both pages at once.</p>
+    <p><a href="https://madcsaba.github.io/ai-awareness-wireframe/petition.html" target="_blank" rel="noopener">The petition for an AI energy label</a> asks the industry to close the data gap.</p>
     <p><b>Sources.</b> Prices, context sizes and release dates come from the open <a href="https://github.com/sst/models.dev" target="_blank" rel="noopener">models.dev</a> database as of 16 November 2026 and from the providers’ documentation. An analysis of the 1,400+ models available in OpenCode is on the <a href="opencode/">OpenCode models</a> page (in Hungarian).</p>
     <p>An independent page, not affiliated with any provider. Source: <a href="https://github.com/madcsaba/ai_modell_selector" target="_blank" rel="noopener">GitHub</a> · Part of <a href="https://madcsaba.github.io/ai-awareness-wireframe/" target="_blank" rel="noopener">EcoAI – AI awareness</a>.</p>
   </div>
@@ -377,64 +380,34 @@ header.top :focus-visible { outline-color: var(--band-fg); }
 </dialog>
 <div class="toast" id="toast" role="status" hidden></div>
 
+<script src="https://madcsaba.github.io/ai-awareness-wireframe/models-data.js"></script>
 <script src="memek/fortepan.js"></script>
 <script>
 "use strict";
-/* ============================== ADATOK ==============================
-   Árak: USD / 1M token, standard (nem batch, nem cache) listaár, 2026. november közepi állapot.
-   r = szerkesztői értékelés 1–5: code (kódolás, ágensek), reason (érvelés), write (magyar szövegírás), speed (sebesség).
-   approx: azok a mezők, ahol a források eltértek vagy közelítő az adat. */
-const DATA_DATE = "16 November 2026";
-const PROVIDERS = {
-  anthropic: { name: "Anthropic", hq: "USA", eu: false, src: "https://platform.claude.com/docs/en/about-claude/models/overview" },
-  openai:    { name: "OpenAI", hq: "USA", eu: false, src: "https://developers.openai.com/api/docs/models" },
-  google:    { name: "Google", hq: "USA", eu: false, src: "https://ai.google.dev/gemini-api/docs/pricing" },
-  mistral:   { name: "Mistral AI", hq: "France (EU)", eu: true, src: "https://docs.mistral.ai/inference/pricing" },
-  deepseek:  { name: "DeepSeek", hq: "China", eu: false, src: "https://api-docs.deepseek.com/quick_start/pricing" },
-  other:     { name: "Other", hq: "–", eu: false, src: "" }
-};
+/* ============================== DATA ==============================
+   The catalogue comes from ONE shared file, used by two pages:
+   https://madcsaba.github.io/ai-awareness-wireframe/models-data.js
+   (the Hungarian page and the 🌿 EcoAI guide load the same file, so a
+   model update appears on every page at once).
+   Prices: USD / 1M tokens, standard list price.
+   r = editorial rating 1–5: code (coding, agents), reason (reasoning),
+   write (writing), speed. approx: fields where sources differ. */
+const KH = window.KH_MODELS;
+if (!KH) {
+  document.getElementById("picks").innerHTML =
+    '<div class="panel empty"><b>The data file could not be loaded (models-data.js).</b>' +
+    '<p class="muted small">Reload the page, or open the <a href="https://madcsaba.github.io/ai-awareness-wireframe/models.html">🌿 EcoAI “Which model should you use?” guide</a>.</p></div>';
+  throw new Error("KH_MODELS missing – models-data.js failed to load");
+}
+const DATA_DATE = KH.dateEn || KH.date;
+const PROVIDERS = Object.fromEntries(Object.entries(KH.providers).map(([k, p]) =>
+  [k, { ...p, name: p.nameEn || p.name, hq: p.hqEn || p.hq }]));
 const M = (o) => Object.assign({ status: "stable", approx: [], tags: [], open: false, license: null, vision: true, thinking: "switch", note: "" }, o);
-const BUILTIN = [
-  // Anthropic
-  M({ id: "claude-fable-5-2", name: "Claude Fable 5.2", p: "anthropic", ctx: 1e6, in: 8, out: 40, thinking: "always", r: { code: 5, reason: 5, write: 5, speed: 2 }, tags: ["frontier", "long agent tasks"], sum: "Anthropic’s most capable widely available model, for the hardest reasoning and long autonomous agent tasks. Thinking is always on, so it is slower and more expensive." }),
-  M({ id: "claude-opus-5-5", name: "Claude Opus 5.5", p: "anthropic", ctx: 1e6, in: 4, out: 20, thinking: "always", r: { code: 5, reason: 5, write: 5, speed: 3 }, tags: ["coding", "agents", "analysis"], sum: "The current Opus model: complex coding, agent workflows and thorough analysis. Cheaper than its predecessor; thinking depth is set with the effort parameter." }),
-  M({ id: "claude-sonnet-5-5", name: "Claude Sonnet 5.5", p: "anthropic", ctx: 1e6, in: 2, out: 10, r: { code: 5, reason: 4, write: 5, speed: 4 }, tags: ["coding", "everyday work", "writing"], sum: "A fast, strong general model for everyday development, agents and business writing. Good value in the top tier." }),
-  M({ id: "claude-haiku-5-5", name: "Claude Haiku 5.5", p: "anthropic", ctx: 1e6, in: 0.10, out: 0.50, r: { code: 4, reason: 3, write: 4, speed: 5 }, tags: ["cheap", "high volume", "chatbot"], note: "This price applies up to a 100K-token prompt; above that $0.50 / $2.50.", sum: "Anthropic’s fastest and cheapest model for high-volume work: classification, extraction, chatbots, sub-agents." }),
-  // OpenAI
-  M({ id: "gpt-6-astra", name: "GPT-6 Astra", p: "openai", ctx: 1.05e6, in: 10, out: 50, r: { code: 5, reason: 5, write: 4, speed: 2 }, tags: ["frontier", "research", "computer use"], note: "A higher price tier applies to long prompts.", sum: "OpenAI’s most capable model for complex reasoning, coding, research and document work. Expensive: for most tasks GPT-6.1 Sol is enough." }),
-  M({ id: "gpt-6.1-sol", name: "GPT-6.1 Sol", p: "openai", ctx: 1.05e6, in: 2, out: 10, r: { code: 5, reason: 5, write: 4, speed: 3 }, tags: ["coding", "agents", "good value"], sum: "Close to Astra for coding, computer use and professional work, at a fifth of the price. The best-value top model in OpenAI’s lineup." }),
-  M({ id: "gpt-6.1-terra", name: "GPT-6.1 Terra", p: "openai", ctx: 1.05e6, in: 1, out: 5, r: { code: 4, reason: 4, write: 4, speed: 4 }, tags: ["fast", "writing", "vision"], sum: "A fast, efficient model for visual reasoning, precise computer use and clear, natural writing." }),
-  M({ id: "gpt-6-luna", name: "GPT-6 Luna", p: "openai", ctx: 1.05e6, in: 0.10, out: 0.50, r: { code: 4, reason: 3, write: 3, speed: 5 }, tags: ["very cheap", "high volume"], sum: "OpenAI’s most efficient model for focused, high-volume tasks: classification, extraction, sub-agents." }),
-  M({ id: "gpt-oss-120b", name: "gpt-oss-120b", p: "openai", ctx: 131072, in: null, out: null, open: true, license: "Apache 2.0", vision: false, r: { code: 3, reason: 3, write: 3, speed: 4 }, tags: ["open-weight", "self-hosted"], note: "No official OpenAI API price: runs on your own hardware or at a third-party provider. A 2025 model; newer open models are stronger.", sum: "Open-weight reasoning model (MoE) that runs on a single 80 GB GPU. Text input only." }),
-  M({ id: "gpt-oss-20b", name: "gpt-oss-20b", p: "openai", ctx: 131072, in: null, out: null, open: true, license: "Apache 2.0", vision: false, r: { code: 2, reason: 2, write: 2, speed: 5 }, tags: ["open-weight", "runs on a laptop"], note: "No official OpenAI API price: runs on your own hardware.", sum: "A small open-weight model that runs on a machine with 16 GB of memory. For local, offline experiments and simple tasks." }),
-  // Google
-  M({ id: "gemini-4-carbon", name: "Gemini 4 Carbon", p: "google", ctx: 1048576, in: 2, out: 10, r: { code: 5, reason: 5, write: 4, speed: 3 }, tags: ["frontier", "multimodal", "factuality"], sum: "Google’s most capable model for complex software engineering, maths, science and long autonomous agent tasks, with high factual accuracy." }),
-  M({ id: "gemini-4-argon", name: "Gemini 4 Argon", p: "google", ctx: 1048576, in: 2, out: 10, r: { code: 5, reason: 5, write: 4, speed: 3 }, tags: ["reasoning", "agents"], sum: "The flagship Gemini 4 reasoning model for software engineering and long agent tasks. Same price as Carbon." }),
-  M({ id: "gemini-4-hydrogen", name: "Gemini 4 Hydrogen", p: "google", ctx: 1048576, in: 1.5, out: 7.5, r: { code: 4, reason: 4, write: 4, speed: 4 }, tags: ["everyday work", "coding"], sum: "Gemini 4 for everyday coding and agent workflows, with four thinking levels and a 1M-token context." }),
-  M({ id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", p: "google", ctx: 1048576, in: 0.75, out: 3.75, r: { code: 4, reason: 4, write: 4, speed: 5 }, tags: ["fast", "multimodal", "good value"], sum: "Google’s strongest Flash model: fast and cheap, yet tuned for long agent and business tasks." }),
-  M({ id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash-Lite", p: "google", ctx: 1048576, in: 0.30, out: 2.50, r: { code: 3, reason: 3, write: 3, speed: 5 }, tags: ["cheap", "high volume"], note: "The older Gemini 3.1 Flash-Lite is still available and cheaper ($0.25 / $1.50).", sum: "A fast, cheap Gemini model for bulk processing, translation and classification, with tool calling." }),
-  M({ id: "gemma-4", name: "Gemma 4 (31B)", p: "google", ctx: 262144, in: null, out: null, open: true, license: "Gemma licence (check terms)", approx: ["license"], r: { code: 3, reason: 3, write: 3, speed: 4 }, tags: ["open-weight", "self-hosted"], note: "Smaller variants: 26B-A4B (MoE), 12B, E4B, E2B. About $0.15 / $0.60 at third parties.", sum: "Open-weight model family built on Gemini research (April 2026), with a 256K context. Runs on your own infrastructure when data must not leave the company." }),
-  // Mistral
-  M({ id: "mistral-large-4", name: "Mistral Large 4", p: "mistral", status: "preview", ctx: 1048576, in: 0.70, out: 2.10, open: false, r: { code: 4, reason: 4, write: 4, speed: 4 }, tags: ["EU", "multilingual"], note: "In beta; the weights are not open.", sum: "Mistral’s largest model from a European provider, with a 1M-token context. Strong multilingual skills, Hungarian included." }),
-  M({ id: "mistral-medium-3.5", name: "Mistral Medium 3.5", p: "mistral", ctx: 262144, in: 1.50, out: 7.50, open: null, approx: ["license"], r: { code: 4, reason: 4, write: 4, speed: 4 }, tags: ["EU", "enterprise"], note: "More expensive than Large 4 while not stronger.", sum: "A multimodal mid-range model for enterprise use from a European provider." }),
-  M({ id: "mistral-large-3", name: "Mistral Large 3", p: "mistral", ctx: 262144, in: 0.50, out: 1.50, open: true, license: "Apache 2.0", r: { code: 4, reason: 4, write: 4, speed: 4 }, tags: ["EU", "open-weight", "MoE"], sum: "A 675-billion-parameter (41B active) MoE model under Apache 2.0: cheap on the API, and the weights are free for commercial use." }),
-  M({ id: "mistral-small-4", name: "Mistral Small 4", p: "mistral", ctx: 256000, in: 0.15, out: 0.60, open: true, license: "Apache 2.0", r: { code: 3, reason: 3, write: 3, speed: 5 }, tags: ["EU", "open-weight", "cheap"], sum: "A small, cheap, open-weight model with image input, for high volume and self-hosting." }),
-  M({ id: "ministral-3-14b", name: "Ministral 3 (14B)", p: "mistral", ctx: 262144, in: 0.20, out: 0.20, open: true, license: "Apache 2.0", r: { code: 3, reason: 2, write: 3, speed: 5 }, tags: ["EU", "edge", "runs on a laptop"], note: "Also available as 3B and 8B.", sum: "A compact model family (3B / 8B / 14B) that runs locally, with image input. For edge devices and cheap, high-volume tasks." }),
-  // DeepSeek
-  M({ id: "deepseek-v4-pro", name: "DeepSeek V4 Pro", p: "deepseek", ctx: 1e6, in: 0.66, out: 1.98, open: true, license: "MIT", vision: false, r: { code: 5, reason: 5, write: 4, speed: 3 }, tags: ["open-weight", "reasoning", "cheap"], note: "Cheaper off-peak. Other providers (e.g. OpenCode Zen) may still charge the old launch price of $1.74 / $3.48.", sum: "A large open-weight (MIT) model with thinking and non-thinking modes. Successor to R1 and V3." }),
-  M({ id: "deepseek-v4.1-flash", name: "DeepSeek V4.1 Flash", p: "deepseek", ctx: 1e6, in: 0.15, out: 0.60, open: true, license: "MIT", r: { code: 4, reason: 4, write: 3, speed: 5 }, tags: ["open-weight", "very cheap"], note: "Successor to V4 Flash (API name: deepseek-flash). The old deepseek-chat and deepseek-reasoner names were retired on 24 July 2026.", sum: "A very cheap, fast open-weight model with image input. Great for bulk processing if your data rules allow a Chinese provider, or self-hosting." })
-];
-const NEEDS = [
-  { id: "code", label: "Coding, agents", rx: /\b(code\w*|coding|program\w*|python|javascript|typescript|react|docker|devops|sql|refactor\w*|debug\w*|api|backend|frontend|git\w*|script\w*|agent\w*|develop\w*)\b/ },
-  { id: "reason", label: "Deep reasoning, maths", rx: /\b(math\w*|proof\w*|prove|logic\w*|algorithm\w*|reason\w*|physic\w*|statistic\w*|strateg\w*|research\w*|scien\w*)\b/ },
-  { id: "write", label: "Writing", rx: /\b(text\w*|writ\w*|article\w*|essay\w*|blog\w*|campaign\w*|marketing|letter\w*|e-?mail\w*|translat\w*|creative|stor(y|ies)|copy\w*|chatbot\w*|customer (service|support))\b/ },
-  { id: "longctx", label: "Long documents", rx: /\b(pdf\w*|document\w*|book\w*|contract\w*|pages?|long|transcript\w*|codebase\w*|repo\w*|rag|archive\w*|minutes|summar\w*)\b/ },
-  { id: "vision", label: "Images, scanned PDFs", rx: /\b(image\w*|photo\w*|picture\w*|ocr|scan\w*|chart\w*|diagram\w*|figure\w*|invoice\w*|receipt\w*|screenshot\w*)\b/ },
-  { id: "bulk", label: "High volume, cheap", rx: /\b(bulk|volume\w*|cheap\w*|low[- ]cost|fast|quick\w*|chatbot\w*|customer (service|support)|categori\w*|classif\w*|label\w*|tagg\w*|extract\w*|thousands?|daily|per day)\b/ }
-];
-const RX_OPEN = /\b(own server\w*|on-?prem\w*|local\w*|offline|open[- ]?(weight|source)s?|self-?host\w*|ollama|sensitive data|private data)\b/;
-const RX_EU = /\b(eu|european|europe|gdpr|data sovereign\w*)\b/;
-const RATING_LABEL = { code: "Coding", reason: "Reasoning", write: "Writing", speed: "Speed" };
+const BUILTIN = KH.models.map((o) => M({ ...o, tags: o.tagsEn || o.tags, note: o.noteEn || o.note, sum: o.sumEn || o.sum }));
+const NEEDS = KH.needs.map((n) => ({ id: n.id, label: n.labelEn || n.label, rx: n.rxEn || n.rx }));
+const RX_OPEN = KH.rxOpenEn || KH.rxOpen;
+const RX_EU = KH.rxEUEn || KH.rxEU;
+const RATING_LABEL = Object.fromEntries(Object.entries(KH.ratingLabels).map(([k, v]) => [k, v.en]));
 const STORE_KEY = "modellvalaszto.custom.v1"; // shared with the Hungarian page
 
 /* ============================== ÁLLAPOT ============================== */
@@ -460,6 +433,7 @@ function fmtUsd(v) {
   return "$" + v.toLocaleString("en-US", { minimumFractionDigits: v < 100 && v % 1 ? 2 : 0, maximumFractionDigits: d });
 }
 const ax = (m, f) => m.approx.includes(f) ? ' <span class="approx" title="Approximate, or sources differ">≈</span>' : "";
+const fmtKwh = (v) => (v == null ? "–" : v === 0 ? "0" : String(v).replace(".", ","));
 const pips = (n) => `<span class="pips" aria-label="${n}/5">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</span>`;
 const provTag = (m) => `<span class="prov"><span class="dot ${esc(m.p)}"></span>${esc(PROVIDERS[m.p]?.name || "Other")}</span>`;
 function badges(m) {
@@ -563,7 +537,7 @@ function renderPicks() {
       ${cav.length ? `<p class="caveat">${cav.map(esc).join(" ")}</p>` : ""}
       <div class="pick-foot">
         <span><span class="cost-big">${s.cost == null ? "own hardware" : fmtUsd(s.cost)}</span>${s.cost == null ? "" : ` <span class="muted">/ month${ax(m, "price")}</span>`}</span>
-        <span class="muted mono">${fmtCtx(m.ctx)}${ax(m, "ctx")} · ${m.in == null ? "–" : fmtUsd(m.in) + " / " + fmtUsd(m.out)}</span>
+        <span class="muted mono">${fmtCtx(m.ctx)}${ax(m, "ctx")} · ${m.in == null ? "–" : fmtUsd(m.in) + " / " + fmtUsd(m.out)} · ⚡ ${fmtKwh(m.kwh)} kWh</span>
       </div>
     </article>`;
   }).join("")}</div>`;
@@ -671,6 +645,7 @@ function openCompare() {
     ["Provider", sc.map((s) => `<td>${provTag(s.m)}<div class="small muted">${esc(PROVIDERS[s.m.p]?.hq)}</div></td>`).join("")],
     ["Fit", (() => { const b = best(sc.map((s) => s.fail ? null : s.score), 1); return sc.map((s) => s.fail ? `<td class="muted small">${esc(s.fail)}</td>` : cell(s.score, b, `<span class="num">${Math.round(s.score * 100)}</span>`)).join(""); })()],
     ["Monthly estimate", (() => { const b = best(sc.map((s) => s.cost), -1); return sc.map((s) => cell(s.cost, b, s.cost == null ? "own hardware" : `<span class="num">${fmtUsd(s.cost)}</span>`)).join(""); })()],
+    ["⚡ kWh / request", (() => { const b = best(sc.map((s) => s.m.kwh), -1); return sc.map((s) => cell(s.m.kwh, b, s.m.kwh == null ? "–" : `<b class="num">⚡ ${fmtKwh(s.m.kwh)}</b>`)).join(""); })()],
     ["Price (in / out, $/1M)", sc.map((s) => `<td class="num">${s.m.in == null ? "–" : fmtUsd(s.m.in) + " / " + fmtUsd(s.m.out)}${ax(s.m, "price")}</td>`).join("")],
     ["Context", (() => { const b = best(sc.map((s) => s.m.ctx), 1); return sc.map((s) => cell(s.m.ctx, b, `<span class="num">${fmtCtx(s.m.ctx)}</span>${ax(s.m, "ctx")}`)).join(""); })()],
     ...["code", "reason", "write", "speed"].map((k) => [RATING_LABEL[k], (() => { const b = best(sc.map((s) => s.m.r[k]), 1); return sc.map((s) => cell(s.m.r[k], b, pips(s.m.r[k]))).join(""); })()]),
@@ -694,6 +669,7 @@ function openDetail(id) {
       <div><span class="label">Context</span><b class="num">${fmtCtx(m.ctx)} tokens${ax(m, "ctx")}</b></div>
       <div><span class="label">Price in / out ($/1M)</span><b class="num">${m.in == null ? "no API fee" : fmtUsd(m.in) + " / " + fmtUsd(m.out)}${ax(m, "price")}</b></div>
       <div><span class="label">Monthly estimate</span><b class="num">${s.cost == null ? "own hardware" : fmtUsd(s.cost)}</b></div>
+      <div><span class="label">Energy (estimate)</span><b class="num">${m.kwh == null ? "–" : "⚡ " + fmtKwh(m.kwh) + " kWh / request"}</b></div>
       <div><span class="label">Weights</span><b>${m.open === true ? "open · " + esc(m.license) : m.open === null ? "to be checked" : "closed"}</b></div>
       <div><span class="label">Image input</span><b>${m.vision === true ? "yes" : m.vision === false ? "no" : "no data"}</b></div>
       <div><span class="label">Headquarters</span><b>${esc(prov.hq)}</b></div>
