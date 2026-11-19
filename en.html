@@ -1,0 +1,911 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>AI Model Selector</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* English version (en.html). Layout: one column – task → recommendation, then a sortable catalogue. Palette: moss and rust (the Hungarian page uses teal and orange). */
+:root {
+  --bg: #f4f4ef; --surface: #fdfdfa; --surface-2: #ebece4; --line: #dcddd2; --line-strong: #c3c5b6;
+  --fg: #1b1f17; --muted: #555c4c; --accent: #3f6b2a; --accent-fg: #ffffff; --accent-soft: #e2edd8;
+  --hl: #a3471f; --hl-soft: #f8e4d8; --band: #23361c; --band-fg: #eef4e8; --band-muted: #b4c8a6;
+  --good: #2f7a3a; --good-soft: #e2f2e2; --warn: #94580a; --warn-soft: #fbf0dc; --bad: #b3261e; --bad-soft: #fbe6e4;
+  --p-anthropic: #b8693a; --p-openai: #2f8466; --p-google: #3567d6; --p-mistral: #c4413a; --p-deepseek: #6a55cf; --p-other: #7a8496; --font-ui: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif; --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace; --r: 10px; --shadow: 0 1px 2px rgb(20 27 37 / .06), 0 8px 24px rgb(20 27 37 / .06);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #10140e; --surface: #171d14; --surface-2: #1e2619; --line: #2a3524; --line-strong: #3a4831;
+  --fg: #e6ecdf; --muted: #a0ad94; --accent: #9ccc7a; --accent-fg: #10140e; --accent-soft: #24361b;
+  --hl: #f0a06a; --hl-soft: #3a2414; --band: #1d2c17; --band-fg: #e6efdc; --band-muted: #9fb58f;
+  --good: #79d18a; --good-soft: #16301b; --warn: #f0b562; --warn-soft: #33270f; --bad: #f2a29b; --bad-soft: #3a1c1a;
+  --p-anthropic: #e39a6c; --p-openai: #5fc09a; --p-google: #7ea4f5; --p-mistral: #f07d72; --p-deepseek: #a596f2; --p-other: #a3acbb; --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25); color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #10140e; --surface: #171d14; --surface-2: #1e2619; --line: #2a3524; --line-strong: #3a4831;
+  --fg: #e6ecdf; --muted: #a0ad94; --accent: #9ccc7a; --accent-fg: #10140e; --accent-soft: #24361b;
+  --hl: #f0a06a; --hl-soft: #3a2414; --band: #1d2c17; --band-fg: #e6efdc; --band-muted: #9fb58f;
+  --good: #79d18a; --good-soft: #16301b; --warn: #f0b562; --warn-soft: #33270f; --bad: #f2a29b; --bad-soft: #3a1c1a;
+  --p-anthropic: #e39a6c; --p-openai: #5fc09a; --p-google: #7ea4f5; --p-mistral: #f07d72; --p-deepseek: #a596f2; --p-other: #a3acbb; --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--font-ui); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { margin: 0; line-height: 1.2; text-wrap: balance; }
+h2 { font-size: 1.15rem; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: .86em; }
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+.label { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+/* Header */
+header.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+header.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 14px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.brand h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -.01em; }
+.top-actions { display: flex; gap: 8px; align-items: center; }
+
+/* Buttons */
+.btn { text-decoration: none; color: var(--fg); display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-strong); background: var(--surface); padding: 7px 12px; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: .9rem; min-height: 36px; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.07); }
+.btn.ghost { border-color: transparent; background: transparent; }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.icon-btn { width: 36px; padding: 0; justify-content: center; }
+
+/* Task section */
+main { padding-block: 24px 64px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); }
+.task { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+.task > div { padding: 20px; display: grid; gap: 16px; align-content: start; min-width: 0; }
+.task > div + div { border-left: 1px solid var(--line); }
+@media (max-width: 820px) { .task { grid-template-columns: minmax(0, 1fr); } .task > div + div { border-left: 0; border-top: 1px solid var(--line); } }
+textarea#task { width: 100%; min-height: 76px; resize: vertical; border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px 12px; background: var(--bg); line-height: 1.45; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line-strong); background: var(--surface); border-radius: 999px; padding: 5px 11px; font-size: .86rem; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; min-height: 32px; }
+.chip:hover { border-color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--fg); font-weight: 600; }
+.chip .tick { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid currentColor; opacity: .5; display: inline-block; flex: none; }
+.chip[aria-pressed="true"] .tick { background: var(--accent); border-color: var(--accent); opacity: 1; box-shadow: inset 0 0 0 2px var(--surface); }
+.chip .auto { font-size: .68rem; color: var(--hl); font-weight: 600; letter-spacing: .03em; }
+.samples { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .85rem; }
+.samples button { background: none; border: 0; padding: 2px 0; color: var(--accent); cursor: pointer; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent); text-underline-offset: 3px; }
+.field { display: grid; gap: 6px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.check { display: flex; gap: 8px; align-items: center; font-size: .9rem; cursor: pointer; }
+.check input { width: 16px; height: 16px; accent-color: var(--accent); }
+select, input[type="number"], input[type="text"], input[type="search"] { border: 1px solid var(--line-strong); border-radius: 8px; padding: 7px 10px; background: var(--surface); min-height: 36px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.range-ends { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); }
+.vol { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.vol label { display: grid; gap: 4px; font-size: .82rem; color: var(--muted); }
+.vol input { width: 100%; font-family: var(--font-mono); }
+
+/* Results */
+.results-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.picks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 900px) { .picks { grid-template-columns: minmax(0, 1fr); } }
+.pick { padding: 16px 18px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.pick.first { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), var(--shadow); }
+.pick-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.rank { font-size: .75rem; font-weight: 600; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.pick.first .rank { color: var(--hl); }
+.pick h3 { font-size: 1.15rem; font-weight: 700; }
+.pick h3 button { all: unset; cursor: pointer; }
+.pick h3 button:hover { text-decoration: underline; }
+.pick h3 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.why { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: .9rem; }
+.caveat { font-size: .82rem; color: var(--warn); background: var(--warn-soft); border-radius: 6px; padding: 6px 9px; }
+.pick-foot { display: flex; justify-content: space-between; gap: 8px; align-items: center; border-top: 1px solid var(--line); padding-top: 10px; font-size: .85rem; flex-wrap: wrap; }
+.cost-big { font-family: var(--font-mono); font-weight: 600; font-size: .95rem; color: var(--accent); }
+.empty { padding: 28px; text-align: center; display: grid; gap: 10px; justify-items: center; }
+
+/* Provider dot + badges */
+.prov { display: inline-flex; align-items: center; gap: 6px; font-size: .84rem; color: var(--muted); white-space: nowrap; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--p-other); flex: none; }
+.dot.anthropic { background: var(--p-anthropic); } .dot.openai { background: var(--p-openai); } .dot.google { background: var(--p-google); } .dot.mistral { background: var(--p-mistral); } .dot.deepseek { background: var(--p-deepseek); }
+.badge { display: inline-block; font-size: .72rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap; }
+.badge.open { color: var(--good); border-color: color-mix(in srgb, var(--good) 45%, transparent); background: var(--good-soft); }
+.badge.preview { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); background: var(--warn-soft); }
+.badge.custom { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.badges { display: flex; gap: 4px; flex-wrap: wrap; }
+.approx { color: var(--warn); cursor: help; }
+
+/* Catalog */
+.cat-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.cat-tools input[type="search"] { flex: 1 1 220px; min-width: 0; }
+.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; flex-wrap: wrap; }
+.seg button { border: 0; background: var(--surface); padding: 6px 11px; cursor: pointer; font-size: .85rem; display: inline-flex; gap: 6px; align-items: center; min-height: 34px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); font-weight: 600; }
+.table-box { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-weight: 600; font-size: .78rem; color: var(--muted); white-space: nowrap; background: var(--surface); position: sticky; top: 0; }
+th button { all: unset; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
+th button:focus-visible { outline: 2px solid var(--accent); border-radius: 4px; }
+th[aria-sort] button { color: var(--fg); }
+td.r, th.r { text-align: right; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--surface-2); }
+tbody tr.dim { opacity: .55; }
+.mname { font-weight: 600; display: block; }
+.fit { display: flex; align-items: center; gap: 8px; min-width: 110px; }
+.bar { flex: 1; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; min-width: 50px; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.pips { display: inline-flex; gap: 2px; vertical-align: middle; }
+.pips i { width: 7px; height: 7px; border-radius: 2px; background: var(--line-strong); }
+.pips i.on { background: var(--accent); }
+td .pips { margin-right: 8px; }
+.caps { display: grid; grid-template-columns: auto auto; gap: 1px 8px; font-size: .78rem; color: var(--muted); align-items: center; }
+td.cmp { width: 44px; }
+td.cmp input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+
+/* Compare bar */
+.cmpbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--surface); border-top: 1px solid var(--line-strong); box-shadow: 0 -6px 20px rgb(0 0 0 / .08); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.cmpbar .wrap { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding-block: 10px; flex-wrap: wrap; }
+.cmpbar .names { display: flex; gap: 6px; flex-wrap: wrap; font-size: .85rem; min-width: 0; }
+.cmpbar .names span { background: var(--surface-2); border-radius: 6px; padding: 2px 8px; }
+body.has-cmp main { padding-bottom: 120px; }
+
+/* Dialogs */
+dialog { border: 1px solid var(--line-strong); border-radius: 12px; padding: 0; background: var(--surface); color: var(--fg); width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 48px); box-shadow: 0 20px 60px rgb(0 0 0 / .3); }
+dialog.wide { width: min(1000px, calc(100vw - 32px)); }
+dialog::backdrop { background: rgb(10 14 20 / .55); }
+.dlg-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.dlg-body { padding: 18px 20px 22px; display: grid; gap: 16px; }
+.kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.kv div { display: grid; gap: 2px; }
+.kv b { font-weight: 600; }
+.ratings { display: grid; gap: 8px; }
+.rating { display: grid; grid-template-columns: 120px 1fr 32px; gap: 10px; align-items: center; font-size: .9rem; }
+.cmp-table td, .cmp-table th { vertical-align: top; }
+.cmp-table th[scope="row"] { color: var(--muted); font-weight: 500; font-size: .85rem; position: static; white-space: normal; }
+.best { color: var(--accent); font-weight: 700; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.form-grid label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); }
+.form-grid input, .form-grid select { width: 100%; color: var(--fg); }
+textarea.json { width: 100%; min-height: 120px; font-family: var(--font-mono); font-size: .8rem; border: 1px solid var(--line-strong); border-radius: 8px; padding: 8px; background: var(--bg); }
+.list { display: grid; gap: 6px; }
+.list-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 0; }
+
+/* Notes / footer */
+.note { font-size: .85rem; color: var(--muted); display: grid; gap: 6px; max-width: 75ch; }
+footer { border-top: 1px solid var(--line); padding-block: 20px 40px; }
+footer .wrap { display: grid; gap: 8px; font-size: .84rem; color: var(--muted); }
+/* Mémsarok */
+.memes { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.meme-card { padding: 14px; display: grid; gap: 12px; justify-items: center; background: var(--hl-soft); border-color: color-mix(in srgb, var(--hl) 30%, transparent); }
+.meme-card img { display: block; max-width: 100%; max-height: 460px; height: auto; border-radius: 8px; background: var(--surface); }
+.meme-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; flex-wrap: wrap; }
+.meme-foot p { font-size: .92rem; }
+.toast { position: fixed; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: .9rem; z-index: 50; box-shadow: var(--shadow); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 640px) { .hide-sm { display: none; } th, td { padding: 9px 8px; } }
+@media (prefers-reduced-motion: no-preference) { .bar > i { transition: width .25s ease; } }
+
+/* Színes fejléc-sáv */
+header.top { background: var(--band); color: var(--band-fg); border-bottom: 0; }
+header.top .muted { color: var(--band-muted); }
+header.top .btn { background: transparent; color: var(--band-fg); border-color: color-mix(in srgb, var(--band-fg) 32%, transparent); }
+header.top .btn:hover { background: color-mix(in srgb, var(--band-fg) 12%, transparent); }
+header.top :focus-visible { outline-color: var(--band-fg); }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <h1>AI Model Selector</h1>
+      <span class="small muted">Prices and models: <span id="dataDate"></span> · with editorial estimates</span>
+    </div>
+    <div class="top-actions">
+      <a class="btn" href="index.html" hreflang="hu" lang="hu" title="Magyar változat">Magyar</a>
+      <a class="btn" href="opencode/" title="Hungarian only">OpenCode models (HU)</a>
+      <button class="btn" id="openCustom" type="button">Your models</button>
+      <button class="btn icon-btn" id="themeBtn" type="button" aria-label="Light or dark theme">◐</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- 1. Feladat -->
+  <section class="panel task" aria-labelledby="taskTitle">
+    <div>
+      <div class="field">
+        <h2 id="taskTitle"><label for="task">What do you need the model for?</label></h2>
+        <textarea id="task" placeholder="Describe it in a sentence or two, e.g. “Customer support chatbot, thousands of questions a day”"></textarea>
+        <div class="samples" aria-label="Examples">
+          <span class="muted">Examples:</span>
+          <button type="button" data-sample="Customer support chatbot, thousands of questions a day, cheap">Chatbot</button>
+          <button type="button" data-sample="Refactoring a large React and Python codebase with a coding agent">Coding agent</button>
+          <button type="button" data-sample="Analysing and summarising 300-page contracts and scanned PDFs">Long PDFs</button>
+          <button type="button" data-sample="Sensitive data, need an open-weight model on our own server">Own server</button>
+          <button type="button" data-sample="Hard mathematical proof and algorithm design">Maths, logic</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label" id="needsLbl">Needs <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">– detected from your description; you can also set them by hand</span></span>
+        <div class="chips" id="needs" role="group" aria-labelledby="needsLbl"></div>
+      </div>
+      <div class="field">
+        <span class="label">Conditions</span>
+        <div class="row">
+          <label class="check"><input type="checkbox" id="cOpen"> Open-weight only (can run on your own server)</label>
+          <label class="check"><input type="checkbox" id="cEu"> EU provider only</label>
+          <label class="check"><input type="checkbox" id="cStable"> Stable versions only (no previews)</label>
+        </div>
+        <div class="row small">
+          <label for="cCtx" class="muted">Minimum context:</label>
+          <select id="cCtx">
+            <option value="0">any</option>
+            <option value="128000">128K tokens (~300 pages)</option>
+            <option value="256000">256K tokens (~600 pages)</option>
+            <option value="1000000">1M tokens (~2,500 pages)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="field">
+        <label class="label" for="prio">What matters more?</label>
+        <input type="range" id="prio" min="0" max="100" step="5" value="30" aria-describedby="prioDesc">
+        <div class="range-ends"><span>Best quality</span><span>Lowest cost</span></div>
+        <p class="small muted" id="prioDesc"></p>
+      </div>
+      <div class="field">
+        <span class="label">Expected monthly traffic</span>
+        <div class="vol">
+          <label>Input (million tokens)<input type="number" id="volIn" min="0" step="1" value="20" inputmode="decimal"></label>
+          <label>Output (million tokens)<input type="number" id="volOut" min="0" step="1" value="4" inputmode="decimal"></label>
+        </div>
+        <p class="small muted">1 million tokens ≈ 2,500 pages of text. Monthly cost is calculated from this and list prices, without discounts (cache, batch).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Ajánlás -->
+  <section aria-labelledby="resTitle" aria-live="polite">
+    <div class="results-head">
+      <h2 id="resTitle">Recommendation</h2>
+      <span class="small muted" id="resMeta"></span>
+    </div>
+    <div id="picks"></div>
+  </section>
+
+  <!-- 3. Katalógus -->
+  <section aria-labelledby="catTitle">
+    <div class="results-head">
+      <h2 id="catTitle">All models</h2>
+      <span class="small muted" id="catMeta"></span>
+    </div>
+    <div class="cat-tools">
+      <input type="search" id="q" placeholder="Search by name or tag" aria-label="Search models">
+      <div class="seg" id="provSeg" role="group" aria-label="Provider"></div>
+    </div>
+    <div class="panel table-box">
+      <table>
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="note" style="margin-top:12px">
+      <p><span class="approx">≈</span> = sources differed or the figure is approximate; check the provider’s price list before deciding (linked on each model’s card).</p>
+    </div>
+  </section>
+  <!-- 4. Mémsarok: Fortepan-fotók a memek/fortepan.json keresései alapján -->
+  <section aria-labelledby="memeTitle" id="memeSec" hidden>
+    <div class="results-head">
+      <h2 id="memeTitle">Meme corner</h2>
+      <span class="small muted" id="memeMeta"></span>
+    </div>
+    <figure class="panel meme-card" style="margin:0">
+      <img id="memeImg" alt="" decoding="async">
+      <figcaption class="meme-foot">
+        <p id="memeCap"></p>
+        <button class="btn" type="button" id="memeNext">Another one</button>
+      </figcaption>
+    </figure>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><b>Method.</b> Fit is a weighted average of the editorial rating (1–5) for the selected needs and the monthly cost; the “What matters more?” slider sets the weight. Ratings are estimates to help you orient, not measurements. The writing rating was made for Hungarian text.</p>
+    <p>Providers do not publish energy use per request, so this page does not estimate energy. A smaller, cheaper model usually means less computation too, but that is not an exact measure. <a href="https://madcsaba.github.io/ai-awareness-wireframe/petition.html" target="_blank" rel="noopener">The petition for an AI energy label</a> asks the industry to close this gap.</p>
+    <p><b>Sources.</b> Prices, context sizes and release dates come from the open <a href="https://github.com/sst/models.dev" target="_blank" rel="noopener">models.dev</a> database as of 16 November 2026 and from the providers’ documentation. An analysis of the 1,400+ models available in OpenCode is on the <a href="opencode/">OpenCode models</a> page (in Hungarian).</p>
+    <p>An independent page, not affiliated with any provider. Source: <a href="https://github.com/madcsaba/ai_modell_selector" target="_blank" rel="noopener">GitHub</a> · Part of <a href="https://madcsaba.github.io/ai-awareness-wireframe/" target="_blank" rel="noopener">EcoAI – AI awareness</a>.</p>
+  </div>
+</footer>
+
+<div class="cmpbar" id="cmpbar" hidden>
+  <div class="wrap">
+    <div class="names" id="cmpNames"></div>
+    <div class="row">
+      <button class="btn ghost" type="button" id="cmpClear">Clear selection</button>
+      <button class="btn primary" type="button" id="cmpOpen">Compare</button>
+    </div>
+  </div>
+</div>
+
+<dialog id="dlgModel" aria-labelledby="dmTitle"><div class="dlg-head"><h2 id="dmTitle"></h2><button class="btn icon-btn ghost" type="button" data-close aria-label="Close">✕</button></div><div class="dlg-body" id="dmBody"></div></dialog>
+<dialog id="dlgCmp" class="wide" aria-labelledby="dcTitle"><div class="dlg-head"><h2 id="dcTitle">Comparison</h2><button class="btn icon-btn ghost" type="button" data-close aria-label="Close">✕</button></div><div class="dlg-body"><div class="table-box" id="dcBody"></div></div></dialog>
+<dialog id="dlgCustom" aria-labelledby="dxTitle">
+  <div class="dlg-head"><h2 id="dxTitle">Your models</h2><button class="btn icon-btn ghost" type="button" data-close aria-label="Close">✕</button></div>
+  <div class="dlg-body">
+    <p class="small muted">Your models are stored only in this browser and take part in the recommendation like the others. Updates to the built-in catalogue still arrive.</p>
+    <div class="list" id="customList"></div>
+    <hr>
+    <form id="customForm" class="field">
+      <h3 style="font-size:1rem">New model</h3>
+      <div class="form-grid">
+        <label>Name *<input type="text" id="fName" required maxlength="60"></label>
+        <label>Provider<select id="fProv"></select></label>
+        <label>Context (thousand tokens)<input type="number" id="fCtx" min="1" value="128"></label>
+        <label>Input $/1M tokens<input type="number" id="fIn" min="0" step="0.01" placeholder="empty = own hardware"></label>
+        <label>Output $/1M tokens<input type="number" id="fOut" min="0" step="0.01" placeholder="empty = own hardware"></label>
+        <label>Coding (1–5)<input type="number" id="fCode" min="1" max="5" value="3"></label>
+        <label>Reasoning (1–5)<input type="number" id="fReason" min="1" max="5" value="3"></label>
+        <label>Writing (1–5)<input type="number" id="fWrite" min="1" max="5" value="3"></label>
+        <label>Speed (1–5)<input type="number" id="fSpeed" min="1" max="5" value="3"></label>
+      </div>
+      <div class="row">
+        <label class="check"><input type="checkbox" id="fOpen"> Open-weight</label>
+        <label class="check"><input type="checkbox" id="fVision"> Accepts images</label>
+      </div>
+      <div><button class="btn primary" type="submit">Add</button></div>
+    </form>
+    <hr>
+    <div class="field">
+      <h3 style="font-size:1rem"><label for="jsonBox">Save and load (JSON)</label></h3>
+      <textarea class="json" id="jsonBox" spellcheck="false" placeholder="Paste the JSON you copied earlier"></textarea>
+      <div class="row"><button class="btn" type="button" id="jsonCopy">Copy your models</button><button class="btn" type="button" id="jsonLoad">Load from the box</button></div>
+    </div>
+  </div>
+</dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="memek/fortepan.js"></script>
+<script>
+"use strict";
+/* ============================== ADATOK ==============================
+   Árak: USD / 1M token, standard (nem batch, nem cache) listaár, 2026. november közepi állapot.
+   r = szerkesztői értékelés 1–5: code (kódolás, ágensek), reason (érvelés), write (magyar szövegírás), speed (sebesség).
+   approx: azok a mezők, ahol a források eltértek vagy közelítő az adat. */
+const DATA_DATE = "16 November 2026";
+const PROVIDERS = {
+  anthropic: { name: "Anthropic", hq: "USA", eu: false, src: "https://platform.claude.com/docs/en/about-claude/models/overview" },
+  openai:    { name: "OpenAI", hq: "USA", eu: false, src: "https://developers.openai.com/api/docs/models" },
+  google:    { name: "Google", hq: "USA", eu: false, src: "https://ai.google.dev/gemini-api/docs/pricing" },
+  mistral:   { name: "Mistral AI", hq: "France (EU)", eu: true, src: "https://docs.mistral.ai/inference/pricing" },
+  deepseek:  { name: "DeepSeek", hq: "China", eu: false, src: "https://api-docs.deepseek.com/quick_start/pricing" },
+  other:     { name: "Other", hq: "–", eu: false, src: "" }
+};
+const M = (o) => Object.assign({ status: "stable", approx: [], tags: [], open: false, license: null, vision: true, thinking: "switch", note: "" }, o);
+const BUILTIN = [
+  // Anthropic
+  M({ id: "claude-fable-5-2", name: "Claude Fable 5.2", p: "anthropic", ctx: 1e6, in: 8, out: 40, thinking: "always", r: { code: 5, reason: 5, write: 5, speed: 2 }, tags: ["frontier", "long agent tasks"], sum: "Anthropic’s most capable widely available model, for the hardest reasoning and long autonomous agent tasks. Thinking is always on, so it is slower and more expensive." }),
+  M({ id: "claude-opus-5-5", name: "Claude Opus 5.5", p: "anthropic", ctx: 1e6, in: 4, out: 20, thinking: "always", r: { code: 5, reason: 5, write: 5, speed: 3 }, tags: ["coding", "agents", "analysis"], sum: "The current Opus model: complex coding, agent workflows and thorough analysis. Cheaper than its predecessor; thinking depth is set with the effort parameter." }),
+  M({ id: "claude-sonnet-5-5", name: "Claude Sonnet 5.5", p: "anthropic", ctx: 1e6, in: 2, out: 10, r: { code: 5, reason: 4, write: 5, speed: 4 }, tags: ["coding", "everyday work", "writing"], sum: "A fast, strong general model for everyday development, agents and business writing. Good value in the top tier." }),
+  M({ id: "claude-haiku-5-5", name: "Claude Haiku 5.5", p: "anthropic", ctx: 1e6, in: 0.10, out: 0.50, r: { code: 4, reason: 3, write: 4, speed: 5 }, tags: ["cheap", "high volume", "chatbot"], note: "This price applies up to a 100K-token prompt; above that $0.50 / $2.50.", sum: "Anthropic’s fastest and cheapest model for high-volume work: classification, extraction, chatbots, sub-agents." }),
+  // OpenAI
+  M({ id: "gpt-6-astra", name: "GPT-6 Astra", p: "openai", ctx: 1.05e6, in: 10, out: 50, r: { code: 5, reason: 5, write: 4, speed: 2 }, tags: ["frontier", "research", "computer use"], note: "A higher price tier applies to long prompts.", sum: "OpenAI’s most capable model for complex reasoning, coding, research and document work. Expensive: for most tasks GPT-6.1 Sol is enough." }),
+  M({ id: "gpt-6.1-sol", name: "GPT-6.1 Sol", p: "openai", ctx: 1.05e6, in: 2, out: 10, r: { code: 5, reason: 5, write: 4, speed: 3 }, tags: ["coding", "agents", "good value"], sum: "Close to Astra for coding, computer use and professional work, at a fifth of the price. The best-value top model in OpenAI’s lineup." }),
+  M({ id: "gpt-6.1-terra", name: "GPT-6.1 Terra", p: "openai", ctx: 1.05e6, in: 1, out: 5, r: { code: 4, reason: 4, write: 4, speed: 4 }, tags: ["fast", "writing", "vision"], sum: "A fast, efficient model for visual reasoning, precise computer use and clear, natural writing." }),
+  M({ id: "gpt-6-luna", name: "GPT-6 Luna", p: "openai", ctx: 1.05e6, in: 0.10, out: 0.50, r: { code: 4, reason: 3, write: 3, speed: 5 }, tags: ["very cheap", "high volume"], sum: "OpenAI’s most efficient model for focused, high-volume tasks: classification, extraction, sub-agents." }),
+  M({ id: "gpt-oss-120b", name: "gpt-oss-120b", p: "openai", ctx: 131072, in: null, out: null, open: true, license: "Apache 2.0", vision: false, r: { code: 3, reason: 3, write: 3, speed: 4 }, tags: ["open-weight", "self-hosted"], note: "No official OpenAI API price: runs on your own hardware or at a third-party provider. A 2025 model; newer open models are stronger.", sum: "Open-weight reasoning model (MoE) that runs on a single 80 GB GPU. Text input only." }),
+  M({ id: "gpt-oss-20b", name: "gpt-oss-20b", p: "openai", ctx: 131072, in: null, out: null, open: true, license: "Apache 2.0", vision: false, r: { code: 2, reason: 2, write: 2, speed: 5 }, tags: ["open-weight", "runs on a laptop"], note: "No official OpenAI API price: runs on your own hardware.", sum: "A small open-weight model that runs on a machine with 16 GB of memory. For local, offline experiments and simple tasks." }),
+  // Google
+  M({ id: "gemini-4-carbon", name: "Gemini 4 Carbon", p: "google", ctx: 1048576, in: 2, out: 10, r: { code: 5, reason: 5, write: 4, speed: 3 }, tags: ["frontier", "multimodal", "factuality"], sum: "Google’s most capable model for complex software engineering, maths, science and long autonomous agent tasks, with high factual accuracy." }),
+  M({ id: "gemini-4-argon", name: "Gemini 4 Argon", p: "google", ctx: 1048576, in: 2, out: 10, r: { code: 5, reason: 5, write: 4, speed: 3 }, tags: ["reasoning", "agents"], sum: "The flagship Gemini 4 reasoning model for software engineering and long agent tasks. Same price as Carbon." }),
+  M({ id: "gemini-4-hydrogen", name: "Gemini 4 Hydrogen", p: "google", ctx: 1048576, in: 1.5, out: 7.5, r: { code: 4, reason: 4, write: 4, speed: 4 }, tags: ["everyday work", "coding"], sum: "Gemini 4 for everyday coding and agent workflows, with four thinking levels and a 1M-token context." }),
+  M({ id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", p: "google", ctx: 1048576, in: 0.75, out: 3.75, r: { code: 4, reason: 4, write: 4, speed: 5 }, tags: ["fast", "multimodal", "good value"], sum: "Google’s strongest Flash model: fast and cheap, yet tuned for long agent and business tasks." }),
+  M({ id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash-Lite", p: "google", ctx: 1048576, in: 0.30, out: 2.50, r: { code: 3, reason: 3, write: 3, speed: 5 }, tags: ["cheap", "high volume"], note: "The older Gemini 3.1 Flash-Lite is still available and cheaper ($0.25 / $1.50).", sum: "A fast, cheap Gemini model for bulk processing, translation and classification, with tool calling." }),
+  M({ id: "gemma-4", name: "Gemma 4 (31B)", p: "google", ctx: 262144, in: null, out: null, open: true, license: "Gemma licence (check terms)", approx: ["license"], r: { code: 3, reason: 3, write: 3, speed: 4 }, tags: ["open-weight", "self-hosted"], note: "Smaller variants: 26B-A4B (MoE), 12B, E4B, E2B. About $0.15 / $0.60 at third parties.", sum: "Open-weight model family built on Gemini research (April 2026), with a 256K context. Runs on your own infrastructure when data must not leave the company." }),
+  // Mistral
+  M({ id: "mistral-large-4", name: "Mistral Large 4", p: "mistral", status: "preview", ctx: 1048576, in: 0.70, out: 2.10, open: false, r: { code: 4, reason: 4, write: 4, speed: 4 }, tags: ["EU", "multilingual"], note: "In beta; the weights are not open.", sum: "Mistral’s largest model from a European provider, with a 1M-token context. Strong multilingual skills, Hungarian included." }),
+  M({ id: "mistral-medium-3.5", name: "Mistral Medium 3.5", p: "mistral", ctx: 262144, in: 1.50, out: 7.50, open: null, approx: ["license"], r: { code: 4, reason: 4, write: 4, speed: 4 }, tags: ["EU", "enterprise"], note: "More expensive than Large 4 while not stronger.", sum: "A multimodal mid-range model for enterprise use from a European provider." }),
+  M({ id: "mistral-large-3", name: "Mistral Large 3", p: "mistral", ctx: 262144, in: 0.50, out: 1.50, open: true, license: "Apache 2.0", r: { code: 4, reason: 4, write: 4, speed: 4 }, tags: ["EU", "open-weight", "MoE"], sum: "A 675-billion-parameter (41B active) MoE model under Apache 2.0: cheap on the API, and the weights are free for commercial use." }),
+  M({ id: "mistral-small-4", name: "Mistral Small 4", p: "mistral", ctx: 256000, in: 0.15, out: 0.60, open: true, license: "Apache 2.0", r: { code: 3, reason: 3, write: 3, speed: 5 }, tags: ["EU", "open-weight", "cheap"], sum: "A small, cheap, open-weight model with image input, for high volume and self-hosting." }),
+  M({ id: "ministral-3-14b", name: "Ministral 3 (14B)", p: "mistral", ctx: 262144, in: 0.20, out: 0.20, open: true, license: "Apache 2.0", r: { code: 3, reason: 2, write: 3, speed: 5 }, tags: ["EU", "edge", "runs on a laptop"], note: "Also available as 3B and 8B.", sum: "A compact model family (3B / 8B / 14B) that runs locally, with image input. For edge devices and cheap, high-volume tasks." }),
+  // DeepSeek
+  M({ id: "deepseek-v4-pro", name: "DeepSeek V4 Pro", p: "deepseek", ctx: 1e6, in: 0.66, out: 1.98, open: true, license: "MIT", vision: false, r: { code: 5, reason: 5, write: 4, speed: 3 }, tags: ["open-weight", "reasoning", "cheap"], note: "Cheaper off-peak. Other providers (e.g. OpenCode Zen) may still charge the old launch price of $1.74 / $3.48.", sum: "A large open-weight (MIT) model with thinking and non-thinking modes. Successor to R1 and V3." }),
+  M({ id: "deepseek-v4.1-flash", name: "DeepSeek V4.1 Flash", p: "deepseek", ctx: 1e6, in: 0.15, out: 0.60, open: true, license: "MIT", r: { code: 4, reason: 4, write: 3, speed: 5 }, tags: ["open-weight", "very cheap"], note: "Successor to V4 Flash (API name: deepseek-flash). The old deepseek-chat and deepseek-reasoner names were retired on 24 July 2026.", sum: "A very cheap, fast open-weight model with image input. Great for bulk processing if your data rules allow a Chinese provider, or self-hosting." })
+];
+const NEEDS = [
+  { id: "code", label: "Coding, agents", rx: /\b(code\w*|coding|program\w*|python|javascript|typescript|react|docker|devops|sql|refactor\w*|debug\w*|api|backend|frontend|git\w*|script\w*|agent\w*|develop\w*)\b/ },
+  { id: "reason", label: "Deep reasoning, maths", rx: /\b(math\w*|proof\w*|prove|logic\w*|algorithm\w*|reason\w*|physic\w*|statistic\w*|strateg\w*|research\w*|scien\w*)\b/ },
+  { id: "write", label: "Writing", rx: /\b(text\w*|writ\w*|article\w*|essay\w*|blog\w*|campaign\w*|marketing|letter\w*|e-?mail\w*|translat\w*|creative|stor(y|ies)|copy\w*|chatbot\w*|customer (service|support))\b/ },
+  { id: "longctx", label: "Long documents", rx: /\b(pdf\w*|document\w*|book\w*|contract\w*|pages?|long|transcript\w*|codebase\w*|repo\w*|rag|archive\w*|minutes|summar\w*)\b/ },
+  { id: "vision", label: "Images, scanned PDFs", rx: /\b(image\w*|photo\w*|picture\w*|ocr|scan\w*|chart\w*|diagram\w*|figure\w*|invoice\w*|receipt\w*|screenshot\w*)\b/ },
+  { id: "bulk", label: "High volume, cheap", rx: /\b(bulk|volume\w*|cheap\w*|low[- ]cost|fast|quick\w*|chatbot\w*|customer (service|support)|categori\w*|classif\w*|label\w*|tagg\w*|extract\w*|thousands?|daily|per day)\b/ }
+];
+const RX_OPEN = /\b(own server\w*|on-?prem\w*|local\w*|offline|open[- ]?(weight|source)s?|self-?host\w*|ollama|sensitive data|private data)\b/;
+const RX_EU = /\b(eu|european|europe|gdpr|data sovereign\w*)\b/;
+const RATING_LABEL = { code: "Coding", reason: "Reasoning", write: "Writing", speed: "Speed" };
+const STORE_KEY = "modellvalaszto.custom.v1"; // shared with the Hungarian page
+
+/* ============================== ÁLLAPOT ============================== */
+const state = {
+  needs: new Set(), autoNeeds: new Set(), autoOpen: false, autoEu: false,
+  prov: "all", q: "", sort: { key: "fit", dir: -1 }, cmp: [], custom: []
+};
+const $ = (s) => document.querySelector(s);
+const norm = (t) => (t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const allModels = () => BUILTIN.concat(state.custom);
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+};
+
+/* ============================== FORMÁZÁS ============================== */
+const fmtCtx = (n) => n >= 1e6 ? (n / 1e6).toLocaleString("en-US", { maximumFractionDigits: 2 }) + "M" : Math.round(n / 1000) + "K";
+function fmtUsd(v) {
+  if (v == null) return "–";
+  const d = v < 1 ? 2 : v < 100 ? 2 : 0;
+  return "$" + v.toLocaleString("en-US", { minimumFractionDigits: v < 100 && v % 1 ? 2 : 0, maximumFractionDigits: d });
+}
+const ax = (m, f) => m.approx.includes(f) ? ' <span class="approx" title="Approximate, or sources differ">≈</span>' : "";
+const pips = (n) => `<span class="pips" aria-label="${n}/5">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</span>`;
+const provTag = (m) => `<span class="prov"><span class="dot ${esc(m.p)}"></span>${esc(PROVIDERS[m.p]?.name || "Other")}</span>`;
+function badges(m) {
+  const b = [];
+  if (m.open === true) b.push(`<span class="badge open">open-weight</span>`);
+  if (m.status === "preview") b.push(`<span class="badge preview">preview</span>`);
+  if (m.custom) b.push(`<span class="badge custom">yours</span>`);
+  return b.join("");
+}
+
+/* ============================== PONTOZÁS ============================== */
+function volume() { return { i: Math.max(0, +$("#volIn").value || 0), o: Math.max(0, +$("#volOut").value || 0) }; }
+function monthly(m, v = volume()) { return m.in == null ? null : m.in * v.i + m.out * v.o; }
+function constraints() {
+  return { open: $("#cOpen").checked, eu: $("#cEu").checked, stable: $("#cStable").checked, ctx: +$("#cCtx").value, vision: state.needs.has("vision") };
+}
+function failReason(m, c) {
+  if (c.open && m.open !== true) return "not open-weight";
+  if (c.eu && !PROVIDERS[m.p]?.eu) return "not an EU provider";
+  if (c.stable && m.status === "preview") return "preview version";
+  if (c.ctx && m.ctx < c.ctx) return "context too small";
+  if (c.vision && m.vision !== true) return "no image input";
+  return "";
+}
+function ctxScore(m) { return clamp(Math.log2(m.ctx / 32000) / Math.log2(1e6 / 32000), 0, 1); }
+function scoreAll() {
+  const c = constraints(), v = volume(), w = +$("#prio").value / 100;
+  const models = allModels();
+  const costs = models.map((m) => monthly(m, v)).filter((x) => x != null && x > 0);
+  const lo = Math.log10(Math.min(...costs, 1e9)), hi = Math.log10(Math.max(...costs, 1e-9));
+  const costScore = (m) => {
+    const x = monthly(m, v);
+    if (x == null) return 0.85; // saját hardver: nincs tokendíj, de van üzemeltetési költség
+    if (x <= 0 || hi === lo) return 1;
+    return 1 - (Math.log10(x) - lo) / (hi - lo);
+  };
+  const needList = [...state.needs];
+  return models.map((m) => {
+    const r = m.r, part = {};
+    const nv = (k) => (r[k] - 1) / 4;
+    for (const n of needList) {
+      part[n] = n === "code" ? nv("code") : n === "reason" ? nv("reason") : n === "write" ? nv("write")
+        : n === "longctx" ? ctxScore(m) : n === "vision" ? (m.vision === true ? 1 : 0)
+        : (nv("speed") + costScore(m)) / 2;
+    }
+    const vals = Object.values(part);
+    const quality = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : (nv("code") + nv("reason") + nv("write")) / 3;
+    const cs = costScore(m);
+    const fail = failReason(m, c);
+    // A minőséget négyzetre emeljük: egy 5/5 és egy 4/5 modell között így érezhetőbb a különbség,
+    // különben a log-skálás árelőny szinte mindig az olcsó modelleket hozná ki.
+    return { m, part, quality, cs, cost: monthly(m, v), fail, score: fail ? -1 : (1 - w) * quality * quality + w * cs };
+  });
+}
+function reasonsFor(s, rankedByCost) {
+  const m = s.m, out = [];
+  const lbl = { code: "coding", reason: "reasoning", write: "writing" };
+  for (const k of ["code", "reason", "write"]) if (s.part[k] !== undefined && m.r[k] >= 4) out.push(`Strong ${lbl[k]} (${m.r[k]}/5)`);
+  if (s.part.longctx !== undefined && m.ctx >= 4e5) out.push(`${fmtCtx(m.ctx)}-token context: a long document fits in one go`);
+  if (s.part.vision !== undefined) out.push("Accepts images and scanned pages");
+  if (s.part.bulk !== undefined && m.r.speed >= 4) out.push("Fast responses at high traffic");
+  if (m.open === true) out.push(`Open-weight (${esc(m.license)}), can run on your own server`);
+  const rank = rankedByCost.indexOf(m.id);
+  if (s.cost != null && rank > -1 && rank < Math.max(1, Math.ceil(rankedByCost.length / 3))) out.push("In the cheaper third of the suitable models");
+  if (!out.length) out.push("Balanced performance under the chosen conditions");
+  return out.slice(0, 3);
+}
+function caveatsFor(m) {
+  const c = [];
+  if (m.status === "preview") c.push("Preview version: behaviour and price may still change.");
+  if (m.approx.includes("price")) c.push("The price is uncertain; check the official price list.");
+  if (m.thinking === "always") c.push("Always thinks: real token use and cost may be higher.");
+  if (m.p === "deepseek") c.push("Chinese provider: for sensitive data, prefer self-hosting.");
+  if (m.in == null) c.push("Own-hardware or third-party hosting cost not included.");
+  return c.slice(0, 2);
+}
+
+/* ============================== RENDER: AJÁNLÁS ============================== */
+let lastScores = [];
+function renderPicks() {
+  const scores = scoreAll();
+  lastScores = scores;
+  const ok = scores.filter((s) => !s.fail).sort((a, b) => b.score - a.score);
+  const out = scores.length - ok.length;
+  const byCost = ok.filter((s) => s.cost != null).sort((a, b) => a.cost - b.cost).map((s) => s.m.id);
+  const needTxt = state.needs.size ? [...state.needs].map((n) => NEEDS.find((x) => x.id === n).label.toLowerCase()).join(", ") : "general use";
+  $("#resMeta").textContent = `${ok.length} suitable model${ok.length === 1 ? "" : "s"}${out ? `, ${out} excluded by your conditions` : ""} · focus: ${needTxt}`;
+  const box = $("#picks");
+  if (!ok.length) {
+    box.innerHTML = `<div class="panel empty"><b>No model meets every condition.</b><p class="muted small">Most often “EU only” together with “open-weight only” narrows too much, or the need for image input.</p><button class="btn" type="button" id="relax">Clear conditions</button></div>`;
+    $("#relax").onclick = () => { ["#cOpen", "#cEu", "#cStable"].forEach((s) => ($(s).checked = false)); $("#cCtx").value = "0"; state.needs.delete("vision"); renderNeeds(); renderAll(); };
+    return;
+  }
+  const ranks = ["Best fit", "Second", "Third"];
+  box.innerHTML = `<div class="picks">${ok.slice(0, 3).map((s, i) => {
+    const m = s.m, cav = caveatsFor(m);
+    return `<article class="panel pick ${i === 0 ? "first" : ""}">
+      <div class="pick-top"><span class="rank">${ranks[i]}</span>${provTag(m)}</div>
+      <div><h3><button type="button" data-detail="${esc(m.id)}">${esc(m.name)}</button></h3><div class="badges" style="margin-top:4px">${badges(m)}</div></div>
+      <ul class="why">${reasonsFor(s, byCost).map((r) => `<li>${r}</li>`).join("")}</ul>
+      ${cav.length ? `<p class="caveat">${cav.map(esc).join(" ")}</p>` : ""}
+      <div class="pick-foot">
+        <span><span class="cost-big">${s.cost == null ? "own hardware" : fmtUsd(s.cost)}</span>${s.cost == null ? "" : ` <span class="muted">/ month${ax(m, "price")}</span>`}</span>
+        <span class="muted mono">${fmtCtx(m.ctx)}${ax(m, "ctx")} · ${m.in == null ? "–" : fmtUsd(m.in) + " / " + fmtUsd(m.out)}</span>
+      </div>
+    </article>`;
+  }).join("")}</div>`;
+}
+
+/* ============================== RENDER: KATALÓGUS ============================== */
+const COLS = [
+  { key: "name", label: "Model" },
+  { key: "fit", label: "Fit" },
+  { key: "ctx", label: "Context", cls: "r" },
+  { key: "in", label: "In $/1M", cls: "r" },
+  { key: "out", label: "Out $/1M", cls: "r" },
+  { key: "cost", label: "Monthly est.", cls: "r" },
+  { key: "caps", label: "Code · Reas. · Writ.", cls: "hide-sm", nosort: true },
+  { key: "cmp", label: "Com&shy;pare", nosort: true }
+];
+function renderHead() {
+  $("#thead").innerHTML = COLS.map((c) => {
+    if (c.nosort) return `<th class="${c.cls || ""}" scope="col">${c.label}</th>`;
+    const active = state.sort.key === c.key;
+    const aria = active ? ` aria-sort="${state.sort.dir > 0 ? "ascending" : "descending"}"` : "";
+    return `<th class="${c.cls || ""}" scope="col"${aria}><button type="button" data-sort="${c.key}">${c.label}<span aria-hidden="true">${active ? (state.sort.dir > 0 ? "↑" : "↓") : ""}</span></button></th>`;
+  }).join("");
+}
+function renderProvSeg() {
+  const ms = allModels();
+  const ids = ["all", ...Object.keys(PROVIDERS).filter((p) => ms.some((m) => m.p === p))];
+  $("#provSeg").innerHTML = ids.map((p) => {
+    const n = p === "all" ? ms.length : ms.filter((m) => m.p === p).length;
+    return `<button type="button" data-prov="${p}" aria-pressed="${state.prov === p}">${p === "all" ? "All" : `<span class="dot ${p}"></span>${esc(PROVIDERS[p].name)}`} <span class="muted num">${n}</span></button>`;
+  }).join("");
+}
+function renderTable() {
+  const q = norm(state.q).trim();
+  let rows = lastScores.filter((s) => (state.prov === "all" || s.m.p === state.prov) &&
+    (!q || norm(`${s.m.name} ${PROVIDERS[s.m.p]?.name} ${s.m.tags.join(" ")} ${s.m.license || ""}`).includes(q)));
+  const k = state.sort.key, d = state.sort.dir;
+  const val = (s) => k === "name" ? norm(s.m.name) : k === "fit" ? s.score : k === "ctx" ? s.m.ctx : k === "in" ? s.m.in : k === "out" ? s.m.out : s.cost;
+  rows.sort((a, b) => {
+    const x = val(a), y = val(b);
+    if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1;
+    return (x < y ? -1 : x > y ? 1 : 0) * d;
+  });
+  $("#catMeta").textContent = `${rows.length} / ${lastScores.length} models`;
+  if (!rows.length) { $("#tbody").innerHTML = `<tr><td colspan="${COLS.length}" class="muted" style="text-align:center;padding:28px;cursor:default">No results for “${esc(state.q)}”.</td></tr>`; return; }
+  const full = state.cmp.length >= 4;
+  $("#tbody").innerHTML = rows.map((s) => {
+    const m = s.m, on = state.cmp.includes(m.id);
+    const fit = s.fail ? `<span class="muted small">${esc(s.fail)}</span>` : `<div class="fit"><div class="bar"><i style="width:${Math.round(s.score * 100)}%"></i></div><span class="num">${Math.round(s.score * 100)}</span></div>`;
+    return `<tr data-detail="${esc(m.id)}" class="${s.fail ? "dim" : ""}">
+      <td><span class="mname">${esc(m.name)}</span><span class="row" style="gap:6px">${provTag(m)}${badges(m)}</span></td>
+      <td>${fit}</td>
+      <td class="r num">${fmtCtx(m.ctx)}${ax(m, "ctx")}</td>
+      <td class="r num">${fmtUsd(m.in)}${m.in != null ? ax(m, "price") : ""}</td>
+      <td class="r num">${fmtUsd(m.out)}</td>
+      <td class="r num">${s.cost == null ? '<span class="muted small">own hw</span>' : fmtUsd(s.cost)}</td>
+      <td class="hide-sm">${pips(m.r.code)} ${pips(m.r.reason)} ${pips(m.r.write)}</td>
+      <td class="cmp"><input type="checkbox" data-cmp="${esc(m.id)}" ${on ? "checked" : ""} ${!on && full ? "disabled" : ""} aria-label="Compare ${esc(m.name)}" title="${!on && full ? "You can compare up to 4 models" : "Add to comparison"}"></td>
+    </tr>`;
+  }).join("");
+}
+
+/* ============================== IGÉNYEK / SZÖVEG ============================== */
+function renderNeeds() {
+  $("#needs").innerHTML = NEEDS.map((n) => `<button type="button" class="chip" data-need="${n.id}" aria-pressed="${state.needs.has(n.id)}"><span class="tick"></span>${n.label}${state.autoNeeds.has(n.id) && state.needs.has(n.id) ? ' <span class="auto">detected</span>' : ""}</button>`).join("");
+}
+function detectFromText() {
+  const t = norm($("#task").value);
+  // Csak a korábban automatikusan felismert igényeket írjuk felül; a kézi választás megmarad.
+  for (const id of state.autoNeeds) state.needs.delete(id);
+  state.autoNeeds = new Set(NEEDS.filter((n) => n.rx.test(t)).map((n) => n.id));
+  for (const id of state.autoNeeds) state.needs.add(id);
+  const o = RX_OPEN.test(t), e = RX_EU.test(t);
+  if (o !== state.autoOpen) { $("#cOpen").checked = o; state.autoOpen = o; }
+  if (e !== state.autoEu) { $("#cEu").checked = e; state.autoEu = e; }
+  renderNeeds();
+}
+function prioText() {
+  const v = +$("#prio").value;
+  $("#prioDesc").textContent = v <= 20 ? "Quality decides; price barely counts." : v >= 80 ? "Price decides; quality only breaks ties." : v < 50 ? "Mostly quality, but price counts too." : v === 50 ? "Quality and price weigh the same." : "Mostly price, but quality counts too.";
+}
+
+/* ============================== ÖSSZEHASONLÍTÁS ============================== */
+function renderCmpBar() {
+  const bar = $("#cmpbar");
+  bar.hidden = state.cmp.length === 0;
+  document.body.classList.toggle("has-cmp", state.cmp.length > 0);
+  const ms = allModels();
+  $("#cmpNames").innerHTML = `<span class="muted" style="background:none;padding:0">${state.cmp.length}/4:</span>` + state.cmp.map((id) => `<span>${esc(ms.find((m) => m.id === id)?.name)}</span>`).join("");
+  $("#cmpOpen").disabled = state.cmp.length < 2;
+  $("#cmpOpen").title = state.cmp.length < 2 ? "Select at least 2 models" : "";
+}
+function toggleCmp(id) {
+  const i = state.cmp.indexOf(id);
+  if (i > -1) state.cmp.splice(i, 1);
+  else if (state.cmp.length < 4) state.cmp.push(id);
+  else { toast("You can compare up to 4 models."); return; }
+  renderCmpBar(); renderTable();
+}
+function openCompare() {
+  const sc = state.cmp.map((id) => lastScores.find((s) => s.m.id === id)).filter(Boolean);
+  const best = (arr, dir) => { const v = arr.filter((x) => x != null); if (!v.length) return null; return dir > 0 ? Math.max(...v) : Math.min(...v); };
+  const cell = (val, b, txt) => `<td class="${val != null && val === b ? "best" : ""}">${txt}</td>`;
+  const rows = [
+    ["Provider", sc.map((s) => `<td>${provTag(s.m)}<div class="small muted">${esc(PROVIDERS[s.m.p]?.hq)}</div></td>`).join("")],
+    ["Fit", (() => { const b = best(sc.map((s) => s.fail ? null : s.score), 1); return sc.map((s) => s.fail ? `<td class="muted small">${esc(s.fail)}</td>` : cell(s.score, b, `<span class="num">${Math.round(s.score * 100)}</span>`)).join(""); })()],
+    ["Monthly estimate", (() => { const b = best(sc.map((s) => s.cost), -1); return sc.map((s) => cell(s.cost, b, s.cost == null ? "own hardware" : `<span class="num">${fmtUsd(s.cost)}</span>`)).join(""); })()],
+    ["Price (in / out, $/1M)", sc.map((s) => `<td class="num">${s.m.in == null ? "–" : fmtUsd(s.m.in) + " / " + fmtUsd(s.m.out)}${ax(s.m, "price")}</td>`).join("")],
+    ["Context", (() => { const b = best(sc.map((s) => s.m.ctx), 1); return sc.map((s) => cell(s.m.ctx, b, `<span class="num">${fmtCtx(s.m.ctx)}</span>${ax(s.m, "ctx")}`)).join(""); })()],
+    ...["code", "reason", "write", "speed"].map((k) => [RATING_LABEL[k], (() => { const b = best(sc.map((s) => s.m.r[k]), 1); return sc.map((s) => cell(s.m.r[k], b, pips(s.m.r[k]))).join(""); })()]),
+    ["Image input", sc.map((s) => `<td>${s.m.vision === true ? "yes" : s.m.vision === false ? "no" : '<span class="muted">no data</span>'}</td>`).join("")],
+    ["Weights", sc.map((s) => `<td>${s.m.open === true ? `open (${esc(s.m.license)})` : s.m.open === null ? '<span class="muted">to be checked</span>' : "closed, API only"}</td>`).join("")],
+    ["Note", sc.map((s) => `<td class="small muted">${esc(s.m.note || "–")}</td>`).join("")]
+  ];
+  $("#dcBody").innerHTML = `<table class="cmp-table"><thead><tr><th scope="col"></th>${sc.map((s) => `<th scope="col" style="position:static"><span class="mname" style="color:var(--fg);font-size:.95rem">${esc(s.m.name)}</span></th>`).join("")}</tr></thead><tbody>${rows.map(([h, c]) => `<tr style="cursor:default"><th scope="row">${h}</th>${c}</tr>`).join("")}</tbody></table><p class="small muted" style="margin-top:12px">Green marks the best value in each row. Ratings are editorial estimates.</p>`;
+  $("#dlgCmp").showModal();
+}
+
+/* ============================== ADATLAP ============================== */
+function openDetail(id) {
+  const s = lastScores.find((x) => x.m.id === id); if (!s) return;
+  const m = s.m, prov = PROVIDERS[m.p] || PROVIDERS.other, on = state.cmp.includes(m.id);
+  $("#dmTitle").textContent = m.name;
+  $("#dmBody").innerHTML = `
+    <div class="row">${provTag(m)}<div class="badges">${badges(m)}</div>${m.apiId || !m.custom ? `<span class="mono muted">${esc(m.apiId || m.id)}</span>` : ""}</div>
+    <p>${esc(m.sum || "A model you added.")}</p>
+    <div class="kv">
+      <div><span class="label">Context</span><b class="num">${fmtCtx(m.ctx)} tokens${ax(m, "ctx")}</b></div>
+      <div><span class="label">Price in / out ($/1M)</span><b class="num">${m.in == null ? "no API fee" : fmtUsd(m.in) + " / " + fmtUsd(m.out)}${ax(m, "price")}</b></div>
+      <div><span class="label">Monthly estimate</span><b class="num">${s.cost == null ? "own hardware" : fmtUsd(s.cost)}</b></div>
+      <div><span class="label">Weights</span><b>${m.open === true ? "open · " + esc(m.license) : m.open === null ? "to be checked" : "closed"}</b></div>
+      <div><span class="label">Image input</span><b>${m.vision === true ? "yes" : m.vision === false ? "no" : "no data"}</b></div>
+      <div><span class="label">Headquarters</span><b>${esc(prov.hq)}</b></div>
+    </div>
+    ${m.note ? `<p class="caveat">${esc(m.note)}</p>` : ""}
+    <div class="ratings"><span class="label">Editorial rating</span>${Object.keys(RATING_LABEL).map((k) => `<div class="rating"><span>${RATING_LABEL[k]}</span><div class="bar"><i style="width:${m.r[k] * 20}%"></i></div><span class="num">${m.r[k]}/5</span></div>`).join("")}</div>
+    ${m.tags.length ? `<div class="badges">${m.tags.map((t) => `<span class="badge">${esc(t)}</span>`).join("")}</div>` : ""}
+    <div class="row">
+      <button class="btn ${on ? "" : "primary"}" type="button" data-cmp-btn="${esc(m.id)}">${on ? "Remove from comparison" : "Add to comparison"}</button>
+      ${prov.src ? `<a class="btn ghost" href="${esc(prov.src)}" target="_blank" rel="noopener">Official price list ↗</a>` : ""}
+      ${m.custom ? `<button class="btn ghost" type="button" data-del="${esc(m.id)}">Delete</button>` : ""}
+    </div>`;
+  if (!$("#dlgModel").open) $("#dlgModel").showModal();
+}
+
+/* ============================== SAJÁT MODELLEK ============================== */
+function loadCustom() {
+  try {
+    const arr = JSON.parse(store.get(STORE_KEY) || "[]");
+    state.custom = Array.isArray(arr) ? arr.map(sanitizeCustom).filter(Boolean) : [];
+  } catch (e) { state.custom = []; }
+}
+function sanitizeCustom(o) {
+  if (!o || typeof o !== "object" || !o.name) return null;
+  const num = (v, d) => (v === null || v === "" || v === undefined || isNaN(+v) ? d : +v);
+  const rt = (v) => clamp(Math.round(num(v, 3)), 1, 5);
+  const r = o.r || {};
+  return M({
+    id: String(o.id || "custom-" + Date.now() + Math.random().toString(36).slice(2, 6)).slice(0, 80),
+    name: String(o.name).slice(0, 60), p: PROVIDERS[o.p] ? o.p : "other", custom: true,
+    ctx: Math.max(1000, num(o.ctx, 128000)), in: num(o.in, null), out: num(o.out, null),
+    open: o.open === true, license: o.open === true ? String(o.license || "user-provided").slice(0, 40) : null,
+    vision: o.vision === true, r: { code: rt(r.code), reason: rt(r.reason), write: rt(r.write), speed: rt(r.speed) },
+    tags: ["yours"], sum: String(o.sum || "A model you added.").slice(0, 300)
+  });
+}
+function saveCustom() {
+  const ok = store.set(STORE_KEY, JSON.stringify(state.custom.map(({ id, name, p, ctx, in: i, out, open, license, vision, r, sum }) => ({ id, name, p, ctx, in: i, out, open, license, vision, r, sum }))));
+  if (!ok) toast("The browser does not allow saving; your models will last only until you close the page.");
+}
+function renderCustomList() {
+  $("#customList").innerHTML = state.custom.length
+    ? state.custom.map((m) => `<div class="list-item"><span><b>${esc(m.name)}</b> <span class="muted small">${esc(PROVIDERS[m.p].name)} · ${fmtCtx(m.ctx)}</span></span><button class="btn ghost" type="button" data-del="${esc(m.id)}">Delete</button></div>`).join("")
+    : `<p class="small muted">No models of your own yet.</p>`;
+}
+function deleteCustom(id) {
+  state.custom = state.custom.filter((m) => m.id !== id);
+  state.cmp = state.cmp.filter((x) => x !== id);
+  saveCustom(); renderCustomList(); renderAll(); renderCmpBar();
+  if ($("#dlgModel").open) $("#dlgModel").close();
+  toast("Model deleted.");
+}
+
+/* ============================== FŐ RENDER ============================== */
+function renderAll() { renderPicks(); renderHead(); renderProvSeg(); renderTable(); }
+let toastT;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 2600); }
+
+/* ============================== ESEMÉNYEK ============================== */
+let typeT;
+$("#task").addEventListener("input", () => { clearTimeout(typeT); typeT = setTimeout(() => { detectFromText(); renderAll(); }, 250); });
+document.querySelectorAll("[data-sample]").forEach((b) => b.addEventListener("click", () => { $("#task").value = b.dataset.sample; detectFromText(); renderAll(); }));
+$("#needs").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-need]"); if (!b) return;
+  const id = b.dataset.need;
+  state.needs.has(id) ? state.needs.delete(id) : state.needs.add(id);
+  state.autoNeeds.delete(id); // kézi döntés: többé nem írjuk felül
+  renderNeeds(); renderAll();
+});
+["#cOpen", "#cEu", "#cStable", "#cCtx", "#volIn", "#volOut"].forEach((s) => $(s).addEventListener("input", renderAll));
+$("#prio").addEventListener("input", () => { prioText(); renderAll(); });
+$("#q").addEventListener("input", (e) => { state.q = e.target.value; renderTable(); });
+$("#provSeg").addEventListener("click", (e) => { const b = e.target.closest("[data-prov]"); if (!b) return; state.prov = b.dataset.prov; renderProvSeg(); renderTable(); });
+$("#thead").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-sort]"); if (!b) return;
+  const k = b.dataset.sort;
+  state.sort = state.sort.key === k ? { key: k, dir: -state.sort.dir } : { key: k, dir: k === "name" || k === "in" || k === "out" || k === "cost" ? 1 : -1 };
+  renderHead(); renderTable();
+});
+$("#tbody").addEventListener("click", (e) => {
+  const cb = e.target.closest("[data-cmp]");
+  if (cb) { toggleCmp(cb.dataset.cmp); return; }
+  const tr = e.target.closest("[data-detail]"); if (tr) openDetail(tr.dataset.detail);
+});
+$("#tbody").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.matches("tr[data-detail]")) openDetail(e.target.dataset.detail); });
+$("#picks").addEventListener("click", (e) => { const b = e.target.closest("[data-detail]"); if (b) openDetail(b.dataset.detail); });
+$("#dmBody").addEventListener("click", (e) => {
+  const c = e.target.closest("[data-cmp-btn]"); if (c) { toggleCmp(c.dataset.cmpBtn); openDetail(c.dataset.cmpBtn); return; }
+  const d = e.target.closest("[data-del]"); if (d) deleteCustom(d.dataset.del);
+});
+$("#cmpClear").addEventListener("click", () => { state.cmp = []; renderCmpBar(); renderTable(); });
+$("#cmpOpen").addEventListener("click", openCompare);
+document.querySelectorAll("dialog").forEach((d) => {
+  d.addEventListener("click", (e) => { if (e.target === d || e.target.closest("[data-close]")) d.close(); });
+});
+$("#openCustom").addEventListener("click", () => { renderCustomList(); $("#dlgCustom").showModal(); });
+$("#customList").addEventListener("click", (e) => { const d = e.target.closest("[data-del]"); if (d) deleteCustom(d.dataset.del); });
+$("#customForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const m = sanitizeCustom({
+    name: $("#fName").value.trim(), p: $("#fProv").value, ctx: (+$("#fCtx").value || 128) * 1000,
+    in: $("#fIn").value, out: $("#fOut").value, open: $("#fOpen").checked, vision: $("#fVision").checked,
+    r: { code: $("#fCode").value, reason: $("#fReason").value, write: $("#fWrite").value, speed: $("#fSpeed").value }
+  });
+  if (!m) return;
+  if ((m.in == null) !== (m.out == null)) { toast("Enter both the input and the output price, or leave both empty."); return; }
+  state.custom.push(m); saveCustom(); renderCustomList(); renderAll();
+  e.target.reset(); toast(`“${m.name}” added.`);
+});
+$("#jsonCopy").addEventListener("click", async () => {
+  const txt = JSON.stringify(state.custom.map(({ name, p, ctx, in: i, out, open, license, vision, r, sum }) => ({ name, p, ctx, in: i, out, open, license, vision, r, sum })), null, 2);
+  $("#jsonBox").value = txt;
+  try { await navigator.clipboard.writeText(txt); toast("Copied to the clipboard."); }
+  catch (e) { $("#jsonBox").select(); toast("Text selected; copy it (Ctrl+C)."); }
+});
+$("#jsonLoad").addEventListener("click", () => {
+  try {
+    const arr = JSON.parse($("#jsonBox").value);
+    if (!Array.isArray(arr)) throw new Error();
+    const add = arr.map((o) => sanitizeCustom({ ...o, id: undefined })).filter(Boolean);
+    state.custom.push(...add); saveCustom(); renderCustomList(); renderAll();
+    toast(`${add.length} model${add.length === 1 ? "" : "s"} loaded.`);
+  } catch (e) { toast("This is not a valid model list. Paste the JSON array the “Copy” button gives."); }
+});
+$("#themeBtn").addEventListener("click", () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  const next = cur === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next; store.set("modellvalaszto.theme", next);
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "/" && !e.target.matches("input, textarea, select")) { e.preventDefault(); $("#q").focus(); }
+});
+
+/* ============================== MÉMSAROK ==============================
+   Fortepan-fotók a memek/fortepan.json keresései és címkéi alapján (memek/fortepan.js, GitHub Action frissíti).
+   Sorsolás: véletlen keresés/címke, abból véletlen fotó. */
+const FP_GROUPS = (window.FORTEPAN && Array.isArray(window.FORTEPAN.keresesek) ? window.FORTEPAN.keresesek : [])
+  .map((g) => ({ nev: String(g.nev || ""), tipus: g.tipus, items: (Array.isArray(g.kepek) ? g.kepek : []).filter((f) => f && f.mid).map((f) => ({
+    src: `https://fortepan.download/file/fortepan-eu/1600/fortepan_${encodeURIComponent(f.mid)}.jpg`,
+    alt: f.leiras || "Archive photo from the Fortepan collection",
+    cap: "Model selection, vintage edition" + (f.ev ? ` (${f.ev})` : "") + (f.leiras ? ` · ${f.leiras}` : ""),
+    credit: { text: `Fortepan / ${f.adomanyozo || "unknown donor"}`, href: `https://fortepan.hu/en/photos/?id=${encodeURIComponent(f.mid)}` },
+    tag: g.tipus === "cimke" ? `“${g.nev}” tag` : `“${g.nev}” search`,
+    key: "f:" + f.mid
+  })) })).filter((g) => g.items.length);
+const SOURCES = [];
+if (FP_GROUPS.length) SOURCES.push(FP_GROUPS.map((g) => g.items));
+let memeCur = null;
+function pickMeme() {
+  let last = null; try { last = sessionStorage.getItem("modellvalaszto.meme"); } catch (e) {}
+  let m = null;
+  for (let i = 0; i < 8; i++) {
+    const src = SOURCES[Math.floor(Math.random() * SOURCES.length)];
+    const pool = src[Math.floor(Math.random() * src.length)];
+    m = pool[Math.floor(Math.random() * pool.length)];
+    if (m.key !== last && (!memeCur || m.key !== memeCur.key)) break;
+  }
+  return m;
+}
+function dropEmpty() {
+  for (const src of SOURCES) for (let i = src.length - 1; i >= 0; i--) if (!src[i].length) src.splice(i, 1);
+  for (let i = SOURCES.length - 1; i >= 0; i--) if (!SOURCES[i].length) SOURCES.splice(i, 1);
+}
+function showMeme() {
+  dropEmpty();
+  if (!SOURCES.length) { $("#memeSec").hidden = true; return; }
+  const m = memeCur = pickMeme();
+  try { sessionStorage.setItem("modellvalaszto.meme", m.key); } catch (e) {}
+  const img = $("#memeImg");
+  img.src = m.src; img.alt = m.alt;
+  const cap = $("#memeCap"); cap.textContent = m.cap;
+  if (m.credit) {
+    const a = document.createElement("a");
+    a.href = m.credit.href; a.target = "_blank"; a.rel = "noopener"; a.textContent = m.credit.text;
+    const c = document.createElement("span"); c.className = "small muted"; c.style.display = "block";
+    c.append(`${m.tag} · Photo: `, a, " · CC BY-SA 3.0");
+    cap.append(c);
+  }
+  const fpN = FP_GROUPS.reduce((n, g) => n + g.items.length, 0);
+  $("#memeMeta").textContent = `${fpN} Fortepan photos from ${FP_GROUPS.length} searches · a different one each visit`;
+  $("#memeSec").hidden = false;
+}
+$("#memeNext").addEventListener("click", showMeme);
+let fpLoaded = false;
+$("#memeImg").addEventListener("load", () => { if (memeCur && memeCur.credit) fpLoaded = true; });
+$("#memeImg").addEventListener("error", () => {
+  // Nem elérhető kép. Ha még egy Fortepan-kép sem töltődött be, valószínűleg a képszerver tiltott ebben
+  // a nézetben: ilyenkor az egész Fortepan-forrást kihagyjuk, különben csak ezt az egy képet.
+  if (memeCur && memeCur.credit && !fpLoaded) {
+    const i = SOURCES.findIndex((src) => src.some((pool) => pool.includes(memeCur)));
+    if (i > -1) SOURCES.splice(i, 1);
+  } else {
+    for (const src of SOURCES) for (const pool of src) { const i = pool.indexOf(memeCur); if (i > -1) pool.splice(i, 1); }
+  }
+  showMeme();
+});
+
+/* ============================== INDULÁS ============================== */
+(function init() {
+  const th = store.get("modellvalaszto.theme"); if (th === "dark" || th === "light") document.documentElement.dataset.theme = th;
+  $("#dataDate").textContent = DATA_DATE;
+  $("#fProv").innerHTML = Object.entries(PROVIDERS).map(([k, v]) => `<option value="${k}">${esc(v.name)}</option>`).join("");
+  loadCustom();
+  // Működő kiinduló állapot: egy példa-feladat már ki van töltve.
+  $("#task").value = "Customer support chatbot, thousands of questions a day, cheap";
+  detectFromText(); prioText(); renderAll(); renderCmpBar(); showMeme();
+  // Billentyűzettel is megnyitható sorok
+  new MutationObserver(() => document.querySelectorAll("#tbody tr[data-detail]").forEach((tr) => tr.tabIndex = 0)).observe($("#tbody"), { childList: true });
+  document.querySelectorAll("#tbody tr[data-detail]").forEach((tr) => tr.tabIndex = 0);
+})();
+</script>
+
+<script data-goatcounter="https://kiazami.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
